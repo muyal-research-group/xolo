@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "xolo"
+version = "0.0.2"
+description = ""
+authors = ["Ignacio Castillo <jcastillo@mictlanx.com>"]
+readme = "README.md"
+packages = [{include = "xolo"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+option = "^2.1.0"
+pycryptodome = "^3.20.0"
+humanfriendly = "^10.0"
+cryptography = "^42.0.5"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
