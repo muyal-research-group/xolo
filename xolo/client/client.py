@@ -2,28 +2,27 @@ import requests as R
 import json as J
 from typing import Dict,List
 from xolo.client.interfaces.auth import AuthenticatedDTO
-from option import Result,Ok,Err,Option,NONE,Some
+from option import Result,Ok,Err,Some
 
 class XoloClient(object):
-    def __init__(self,hostname:str, protocol:str ="http", port:Option[int]=NONE,version:int=4):
-        self.protocol = protocol
+    def __init__(self,hostname:str,  port:int=-1,version:int=4 ):
         self.hostname  = hostname
         self.port     = port
         self.version  = version 
     
     def base_url(self):
-        if self.port.is_none:
-            return "{}://{}".format(self.protocol,self.hostname)
+        if self.port == -1:
+            return "https://{}".format(self.hostname)
         else:
-            port = self.port.unwrap()
-            return "{}://{}:{}".format(self.protocol,self.hostname,port)
+            return "http://{}:{}".format(self.hostname,self.port)
     def create_user(self,
                     username:str,
                     first_name:str,
                     last_name:str,
                     email:str,
                     password:str,
-                    profile_photo:str=""
+                    profile_photo:str="",
+                    role:str = ""
     )->Result[R.Response,Exception]:
         try:
             url  = "{}/api/v{}/users".format(self.base_url(),self.version)
@@ -33,8 +32,10 @@ class XoloClient(object):
                 "last_name":last_name,
                 "email":email,
                 "password":password,
-                "profile_photo":profile_photo
+                "profile_photo":profile_photo,
+                "role": username if role =="" else role
             })
+            
             response = R.post(url=url,data=data)
             response.raise_for_status()
             return Ok(response)
@@ -101,27 +102,3 @@ class XoloClient(object):
         except Exception as e:
             return False
 
-
-if __name__ == "__main__":
-    xolo_api = XoloClient(hostname="localhost",protocol="http",port=Some(10001),version=4)
-    x = xolo_api.auth(username="test",password="password123")
-    if x.is_err:
-        print(x.unwrap_err())
-    else:
-        response = x.unwrap()
-        is_verified = xolo_api.verify(access_token=response.access_token,username=response.username, secret=response.temporal_secret)
-        print("IS_VERIFIED",is_verified)
-        y = xolo_api.grants(grants={
-            "user":{
-                "client2":["write","read"]
-            }
-        })
-        print(y)
-        check_result = xolo_api.check(role='user',resource="client2",permission="write")
-        print(check_result)
-        check_result = xolo_api.check(role='user',resource="client2",permission="delete")
-        print(check_result)
-
-    # x = 
-    # xolo_api.create_user(username="test",first_name="test",last_name="test",email="email@emil.com",password="password123")
-    # print(x)
