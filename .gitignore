@@ -1,3 +1,5 @@
 log/
 *.lock
 dist/
+data/
+**/**/__pycache__
