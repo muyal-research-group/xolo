@@ -2,10 +2,9 @@ import hashlib as H
 import humanfriendly as HF
 from pathlib import Path
 from Crypto.Cipher import AES
-# from cryptography.hazmat.primitives.asymmetric import X25519PrivateKey,X25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes,PrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey,X25519PublicKey
 from cryptography.hazmat.primitives import serialization
-from typing import Tuple,Type
+from typing import Tuple,Type,Generator
 from option import Result,Ok,Err,Option,NONE
 import os
 import random
@@ -60,6 +59,19 @@ class Utils:
                     return (h.hexdigest(),size)
                 size+= len(data)
                 h.update(data)
+    @staticmethod
+    def sha25_stream(gen:Generator[bytes,None,None])->Tuple[str,int]:
+        try:
+            h = H.sha256()
+            size = 0
+            for chunk in gen:
+                size+= len(chunk)
+                h.update(chunk)
+            return (h.hexdigest(),size)
+            
+
+        except Exception as e:
+            print(e)
 
     @staticmethod
     def extract_path_sha256_size(path:str)->Tuple[str,str,int]:
@@ -92,7 +104,7 @@ class Utils:
             f.write(public_bytes)
 
     @staticmethod
-    def load_private_key(filename:str)->Result[Type[PrivateKeyTypes],Exception]:
+    def load_private_key(filename:str)->Result[Type[X25519PrivateKey],Exception]:
         try:
             private_path = "{}/{}".format(Utils.SECRET_PATH,filename)
             with open(private_path,"rb")  as f:
@@ -103,7 +115,7 @@ class Utils:
             return Err(e)
 
     @staticmethod
-    def load_public_key(filename:str)->Result[Type[PublicKeyTypes],Exception]:
+    def load_public_key(filename:str)->Result[Type[X25519PrivateKey],Exception]:
         try:
             public_path  = "{}/{}.pub".format(Utils.SECRET_PATH,filename)
             with open(public_path,"rb")  as f:
@@ -113,7 +125,7 @@ class Utils:
             return Err(e)
         
     @staticmethod
-    def load_key_pair(filename:str)->Result[Tuple[Type[PrivateKeyTypes],Type[PublicKeyTypes]],Exception]:
+    def load_key_pair(filename:str)->Result[Tuple[Type[X25519PrivateKey],Type[X25519PublicKey]],Exception]:
         try:
             private_key_result = Utils.load_private_key(filename=filename)
             public_key_result = Utils.load_public_key(filename=filename)
@@ -231,27 +243,28 @@ class Utils:
             return Err(e)
         # iterations = 1000
 if __name__ =="__main__":
-    res  = Utils.load_key_pair(filename="jcastillo").unwrap()
-    res2 = Utils.load_key_pair(filename="test").unwrap()
-    shared_key = res[0].exchange(peer_public_key=res2[1])
-    # Utils.X25519_key_pair_generator(
-    #     filename="test"
-    # )
-    x = Utils.decrypt_file_aes(
-        path="/mictlanx/xolo/out/01.pdf.enc",
-        dest_path="/source/xolo",
-        chunk_size="1MB",
-        header=NONE,
-        key=shared_key
-    )
-    # x = Utils.encrypt_file_aes(
-    #     path="/source/01.pdf",
-    #     dest_path="/mictlanx/xolo/out",
-    #     key=shared_key,
+    keypair = Utils.X25519_key_pair_generator(filename="hola")
+    # res  = Utils.load_key_pair(filename="jcastillo").unwrap()
+    # res2 = Utils.load_key_pair(filename="test").unwrap()
+    # shared_key = res[0].exchange(peer_public_key=res2[1])
+    # # Utils.X25519_key_pair_generator(
+    # #     filename="test"
+    # # )
+    # x = Utils.decrypt_file_aes(
+    #     path="/mictlanx/xolo/out/01.pdf.enc",
+    #     dest_path="/source/xolo",
     #     chunk_size="1MB",
-    #     header=NONE
+    #     header=NONE,
+    #     key=shared_key
     # )
-    print(x)
+    # # x = Utils.encrypt_file_aes(
+    # #     path="/source/01.pdf",
+    # #     dest_path="/mictlanx/xolo/out",
+    # #     key=shared_key,
+    # #     chunk_size="1MB",
+    # #     header=NONE
+    # # )
+    # print(x)
     # x = Utils.pbkdf2(password="xxx",key_length=32,iterations=1000, salt_length=16)
     # y = Utils.check_password_hash(password="xx",password_hash=x )
     # print(x,y)
