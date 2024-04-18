@@ -60,7 +60,7 @@ class Utils:
                 size+= len(data)
                 h.update(data)
     @staticmethod
-    def sha25_stream(gen:Generator[bytes,None,None])->Tuple[str,int]:
+    def sha256_stream(gen:Generator[bytes,None,None])->Tuple[str,int]:
         try:
             h = H.sha256()
             size = 0
