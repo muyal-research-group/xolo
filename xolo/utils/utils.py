@@ -59,6 +59,7 @@ class Utils:
                     return (h.hexdigest(),size)
                 size+= len(data)
                 h.update(data)
+    
     @staticmethod
     def sha256_stream(gen:Generator[bytes,None,None])->Tuple[str,int]:
         try:

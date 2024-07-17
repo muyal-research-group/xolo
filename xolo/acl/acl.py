@@ -7,7 +7,7 @@ import hashlib as H
 import humanfriendly as HF
 import json as J
 import time as T
-from xolo.log.log import Log
+from xolo.log import Log
 
 class AclDaemon(Thread):
  
