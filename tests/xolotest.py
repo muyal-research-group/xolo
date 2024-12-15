@@ -5,6 +5,7 @@ from typing import  Generator
 import secrets
 from xolo.client.client import XoloClient
 from xolo.utils import Utils
+# from xolo.log import Log
 
 
 class XoloTest(unittest.TestCase):
