@@ -9,13 +9,17 @@ from option import Result,Ok,Err,Option,NONE
 import os
 import random
 import string
+import secrets
+
 class Utils:
+    
     SECRET_PATH = os.environ.get("XOLO_SECRET_PATH","/mictlanx/xolo/.keys")
 
     @staticmethod
     def get_random_string(length,alphabet:str= string.ascii_letters + string.digits):
         random_string = ''.join(random.choice(alphabet) for i in range(length))
         return random_string
+    
     @staticmethod
     def pbkdf2(password:str,key_length:int=32, iterations:int = 1000,salt_length:int = 16)->str:
         _pass      = password.encode("utf-8")
@@ -39,8 +43,6 @@ class Utils:
         _key        = H.pbkdf2_hmac('sha256',password.encode("utf-8"), bytes.fromhex(salt), int(iterations), int(key_length)).hex()
         return _key == _password_hash
         # print("LOCAL_KEY",_key.hex())
-
-
 
     @staticmethod
     def sha256(value:bytes)->str:
@@ -74,6 +76,7 @@ class Utils:
         except Exception as e:
             print(e)
 
+
     @staticmethod
     def extract_path_sha256_size(path:str)->Tuple[str,str,int]:
         h = H.sha256()
@@ -87,7 +90,7 @@ class Utils:
                 h.update(data)
             
     @staticmethod
-    def  X25519_key_pair_generator(filename:str):
+    def X25519_key_pair_generator(filename:str):
         os.makedirs(Utils.SECRET_PATH, exist_ok=True)
         private_key = X25519PrivateKey.generate()
         pub_key     = private_key.public_key()
@@ -229,6 +232,7 @@ class Utils:
             return Ok(dest_path_file)
         except Exception as e:
             return Err(e)
+    
     @staticmethod
     def decrypt_aes(key:bytes=None,data:bytes=None,header:Option[bytes] =NONE)->Result[bytes,Exception]:
         # iterations = 1000
@@ -242,6 +246,17 @@ class Utils:
             return Ok(cipher.decrypt_and_verify(ciphertext=ciphertext,received_mac_tag=tag))
         except Exception as e:
             return Err(e)
+
+    @staticmethod
+    def generate_password(length:int=12):
+        # Define the character set: letters, digits, and punctuation
+        characters = string.ascii_letters + string.digits 
+        # Use secrets.choice to select a secure random character for each position in the password
+        password = ''.join(secrets.choice(characters) for _ in range(length))
+        return password
+    
+
+
         # iterations = 1000
 if __name__ =="__main__":
     keypair = Utils.X25519_key_pair_generator(filename="hola")
