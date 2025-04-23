@@ -1,7 +1,7 @@
 import requests as R
 import json as J
 from typing import Dict,List
-from xolo.client.interfaces.auth import AuthenticatedDTO
+from xolo.client.interfaces.auth import AuthenticatedDTO,AssignLicenseResponseDTO,AssignedScopeResponseDTO,DeletedLicenseResponseDTO
 from option import Result,Ok,Err,Some
 
 class XoloClient(object):
@@ -56,15 +56,20 @@ class XoloClient(object):
         except Exception as e:
             return False
 
+    def richi_function(self,param1):
+        pass
+
     def auth(self,
              username:str,
-             password:str
+             password:str,
+             scope:str
     )->Result[AuthenticatedDTO,Exception]:
         try:
             url = "{}/api/v{}/users/auth".format(self.base_url(),self.version)
             data = J.dumps({
                 "username":username,
-                "password":password
+                "password":password,
+                "scope":scope
             })
             response = R.post(url=url,data=data)
             response.raise_for_status()
@@ -74,15 +79,77 @@ class XoloClient(object):
             )
         except Exception as e:
             return Err(e)
-        
+    def create_license(
+        self,
+        username: str,
+        scope: str,
+        secret: str,
+        expires_in: str = "1h",
+        force:bool = True,
+    )->Result[AssignLicenseResponseDTO, Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/licenses/"
+            data = J.dumps({
+                "username":username,
+                "scope":scope,
+                "expires_in":expires_in,
+                "force":force
+            })
+            response = R.post(url=url, data = data, headers={"Secret": secret})
+            response.raise_for_status()
+            json_data = response.json()
+            return Ok(AssignLicenseResponseDTO(
+                **json_data
+            ))
+        except Exception as e:
+            return Err(e)
+    def assign_scope(self,
+                     username:str, scope:str, secret:str)->Result[AssignedScopeResponseDTO, Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/scopes/assign"
+            data = J.dumps({
+                "username":username,
+                "name":scope
+            })
+            response = R.post(url =url, data=data, headers={"Secret": secret})
+            response.raise_for_status()
+            json_data = response.json()
+            return Ok(
+                AssignedScopeResponseDTO(**json_data)
+            )
+        except Exception as e:
+            return Err(e)
     # ACL
-    def grants(self,grants:Dict[str,Dict[str,List[str]]])->Result[bool, Exception]:
+    def get_resources_by_role(self,role:str)->Result[Dict[str,List[str]],Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/users/{role}/resources"
+            response = R.get(url=url)
+            response.raise_for_status()
+            print(response)
+            return Ok( response.json().get("resources",{} ))
+        except Exception as e:
+            return Err(e)
+        
+    def grantx(self,role:str,grants:Dict[str,Dict[str,List[str]]])->Result[bool,Exception]:
+        try:
+            url = "{}/api/v{}/users/grantx".format(self.base_url(),self.version)
+            data = J.dumps({
+                "grants":grants,
+                "role":role
+            })
+            response = R.post(url=url, data=data)
+            response.raise_for_status()
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
+        
+    def grants(self,grants:Dict[str,Dict[str,List[str]]],secret:str)->Result[bool, Exception]:
         try:
             url = "{}/api/v{}/users/grants".format(self.base_url(),self.version)
             data = J.dumps({
                 "grants":grants
             })
-            response = R.post(url=url, data=data)
+            response = R.post(url=url, data=data,headers={"Secret":secret})
             response.raise_for_status()
             return Ok(True)
         except Exception as e:
@@ -101,4 +168,39 @@ class XoloClient(object):
             return response_data.get("result",False)
         except Exception as e:
             return False
-
+    
+    def delete_license(self,username:str, scope:str,force:bool = True,secret:str="")->Result[DeletedLicenseResponseDTO, Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/licenses/"
+            data = J.dumps({
+                "username":username,
+                "scope":scope,
+                "force":force
+            })
+            response = R.delete(url=url, data = data, headers={"Secret": secret})
+            response.raise_for_status()
+            json_data = response.json()
+            return Ok(DeletedLicenseResponseDTO(
+                **json_data
+            )) 
+        except Exception as e:
+            return Err(e)
+     
+    def self_delete_license(self,username:str, scope:str,token:str,secret:str,force:bool = True)->Result[DeletedLicenseResponseDTO, Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/licenses/self"
+            data = J.dumps({
+                "token":token,
+                "tmp_secret_key":secret,
+                "username":username,
+                "scope":scope,
+                "force":force
+            })
+            response = R.delete(url=url, data = data) 
+            response.raise_for_status()
+            json_data = response.json()
+            return Ok(DeletedLicenseResponseDTO(
+                **json_data
+            )) 
+        except Exception as e:
+            return Err(e)

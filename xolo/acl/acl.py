@@ -343,23 +343,11 @@ if __name__ =="__main__":
         key="ceb2d1e79b1edefa82ffa54b94b5bf911b534a8e6e60d0ce6bdeac72192c7d9b",
         heartbeat="5sec"
     )
-    # acl.add(grants= {
-    #     "admin":{
-    #         "bucket-0":["write","read"]
-    #     },
-    #     "user":{
-    #         "bucket-1":["read","delete"]
-    #     }
-    # })
-    # acl.remove_permission("read")
-
     acl.grant(role ="guest",resource = "bucket-2",permission =  "write")
-    # acl.remove_role("admin")
     print("Roles",acl.get_roles())
     print("Resources",acl.get_resources())
     print("Permissions",acl.get_permissions())
     print("Grants",acl.show())
-    # T.sleep(1000)
     acl.grants(grants= {
         # "admin":{
         #     "bucket-0":["write","read"]
