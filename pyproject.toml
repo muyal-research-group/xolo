@@ -1,19 +1,21 @@
 [tool.poetry]
 name = "xolo"
-version = "0.0.8-alpha-13"
+version = "0.0.9-alpha-6"
 description = ""
 authors = ["Ignacio Castillo <jcastillo@mictlanx.com>"]
 readme = "README.md"
 packages = [{include = "xolo"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 option = "^2.1.0"
 pycryptodome = "^3.20.0"
 humanfriendly = "^10.0"
 cryptography = "^42.0.5"
 requests = "^2.31.0"
 python-dotenv = "^1.1.0"
+networkx = "^3.4.2"
+pydantic = "^2.11.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
