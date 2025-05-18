@@ -26,6 +26,7 @@ class AccessRequest(BaseModel):
     space: AttributeComponent
     time: AttributeComponent
     action: AttributeComponent
+    
     @classmethod
     def from_json(cls, path: str) -> "AccessRequest":
         with open(path, "r", encoding="utf-8") as f:
@@ -40,6 +41,7 @@ class Policy(BaseModel):
     description:str
     events:List[Event]
     effect:str
+
     @classmethod
     def from_json(cls, path: str) -> "Policy":
         with open(path, "r", encoding="utf-8") as f:
