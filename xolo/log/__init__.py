@@ -1,3 +1,4 @@
+# xolo/log/__init__.py
 import os
 import sys
 import logging
@@ -5,8 +6,6 @@ from logging.handlers import TimedRotatingFileHandler
 import json
 import threading
 from option import NONE,Option
-# from lo
-# from pathlib import Path
 
 class DumbLogger(object):
     def debug(self,**kargs):

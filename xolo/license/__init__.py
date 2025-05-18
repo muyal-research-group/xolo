@@ -1,3 +1,4 @@
+# xolo/license/__init__.py
 import time
 import hmac
 import hashlib as H

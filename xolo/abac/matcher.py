@@ -1,4 +1,4 @@
-# core/event_matcher.py
+# xolo/abac/matcher.py
 
 from xolo.abac.models import Event, AttributeComponent,AccessRequest
 # from abac.core.request import AccessRequest

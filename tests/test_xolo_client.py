@@ -22,7 +22,7 @@ xolo_client = XoloClient(
     # hostname = os.environ.get("XOLO_API_HOSTNAME","alpha.tamps.cinvestav.mx/xoloapi"),
     # port     = int(os.environ.get("XOLO_API_PORT","-1")),
 
-# @pytest.mark.skip("")
+@pytest.mark.skip("")
 def test_self_delete_license():
     # res =xolo_client.get_resources_by_role(role="test")
     username = "jcastillo"
@@ -91,6 +91,11 @@ def test_create_user():
     print(response)
     assert response.is_ok
 
+@pytest.mark.skip("")
+def test_create_scope():
+    scope    = "muyal"
+    response = xolo_client.create_scope(scope=scope)
+    assert response.is_ok
 
 @pytest.mark.skip("")
 def test_assign_scope():

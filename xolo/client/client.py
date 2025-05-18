@@ -1,3 +1,4 @@
+# xolo/client/client.py
 import requests as R
 import json as J
 from typing import Dict,List
@@ -56,8 +57,6 @@ class XoloClient(object):
         except Exception as e:
             return False
 
-    def richi_function(self,param1):
-        pass
 
     def auth(self,
              username:str,
@@ -101,6 +100,18 @@ class XoloClient(object):
             return Ok(AssignLicenseResponseDTO(
                 **json_data
             ))
+        except Exception as e:
+            return Err(e)
+    def create_scope(self,scope:str,secret:str="")->Result[bool, Exception]:
+        try:
+            url = f"{self.base_url()}/api/v{self.version}/scopes"
+            data = J.dumps({
+                "name":scope
+            })
+            response = R.post(url =url, data=data, headers={"Secret": secret})
+            response.raise_for_status()
+            json_data = response.json()
+            return Ok(True)
         except Exception as e:
             return Err(e)
     def assign_scope(self,

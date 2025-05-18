@@ -1,1 +1,1 @@
-from .utils import Utils
+from xolo.utils.utils import Utils
