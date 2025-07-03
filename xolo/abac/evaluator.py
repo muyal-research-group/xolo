@@ -1,27 +1,28 @@
 # core/evaluator_community.py
 
 from typing import List, Dict
-from xolo.abac.models import Policy,AccessRequest
+from xolo.abac.models import Policy, AccessRequest
 from xolo.abac.matcher import EventMatcher
 from xolo.abac.graph import GraphBuilder
 
 class CommunityPolicyEvaluator:
-    def __init__(self, policies: List[Policy]=[], policies_by_community: Dict[str, List[str]]={}):
-        self.policies:Dict[str,Policy] = {p.policy_id: p for p in policies}
+    def __init__(self, policies: List[Policy] = [], policies_by_community: Dict[str, List[str]] = {}):
+        self.policies: Dict[str, Policy] = {p.policy_id: p for p in policies}
         self.policies_by_community = policies_by_community
 
-  
-    def set_policies(self,policies:List[Policy]=[]):
+    def set_policies(self, policies: List[Policy] = []):
         self.policies = {p.policy_id: p for p in policies}
-        # self.policies = policies
-    def set_policies_by_community(self,policies_by_community: Dict[str, List[str]]={}):
+
+    def set_policies_by_community(self, policies_by_community: Dict[str, List[str]] = {}):
         self.policies_by_community = policies_by_community
-    def run(self, policies:List[Policy]=[],policies_by_community: Dict[str, List[str]]={} ):
+
+    def run(self, policies: List[Policy] = [], policies_by_community: Dict[str, List[str]] = {}):
         self.set_policies(policies=policies)
         self.set_policies_by_community(policies_by_community=policies_by_community)
-        
-      # Cargar pesos dinámicos de atributos basados en entropía
+
+        # Cargar pesos dinámicos de atributos basados en entropía
         self.attribute_weights = GraphBuilder.calculate_attribute_weights(policies)
+
         # Precalcular eventos agrupados por comunidad
         self.events_by_community = {}
         for community_id, policy_ids in policies_by_community.items():
@@ -32,9 +33,85 @@ class CommunityPolicyEvaluator:
                     events.extend(policy.events)
             self.events_by_community[community_id] = events
 
+    def remove_policy(self, policy_id: str):
+        # Eliminar de diccionario de políticas
+        self.policies.pop(policy_id, None)
+
+        # Buscar y eliminar de su comunidad
+        for community_id, policy_ids in self.policies_by_community.items():
+            if policy_id in policy_ids:
+                policy_ids.remove(policy_id)
+
+                # Recalcular eventos de esa comunidad
+                events = []
+                for pid in policy_ids:
+                    policy = self.policies.get(pid)
+                    if policy:
+                        events.extend(policy.events)
+                self.events_by_community[community_id] = events
+                break  # Solo puede estar en una comunidad
+
+    def update_policy(self, updated_policy: Policy):
+        pid = updated_policy.policy_id
+
+        # Reemplazar en diccionario de políticas
+        self.policies[pid] = updated_policy
+
+        # Encontrar la comunidad a la que pertenece
+        for community_id, policy_ids in self.policies_by_community.items():
+            if pid in policy_ids:
+                # Recalcular los eventos de esa comunidad
+                events = []
+                for other_pid in policy_ids:
+                    policy = self.policies.get(other_pid)
+                    if policy:
+                        events.extend(policy.events)
+                self.events_by_community[community_id] = events
+                break
+    
+    def add_policy(self, policy: Policy):
+        self.policies[policy.policy_id] = policy
+
+        # Evaluar similitud con comunidades existentes
+        best_community = None
+        best_score = -1
+
+        for community_id, policy_ids in self.policies_by_community.items():
+            community_score = 0.0
+
+            # Comparar eventos nuevos con eventos ya existentes en la comunidad
+            for existing_pid in policy_ids:
+                existing_policy = self.policies.get(existing_pid)
+                if not existing_policy:
+                    continue
+                for existing_event in existing_policy.events:
+                    for new_event in policy.events:
+                        score = self._weighted_match_score(new_event, existing_event)
+                        community_score += score
+
+            if community_score > best_score:
+                best_score = community_score
+                best_community = community_id
+
+        if best_community is None:
+            # Si no se encontró comunidad, descartar o crear nueva (por ahora, ignoramos)
+            return
+
+        # Asociar política a la comunidad más afín
+        self.policies_by_community[best_community].append(policy.policy_id)
+
+        # Recalcular eventos de esa comunidad
+        events = []
+        for pid in self.policies_by_community[best_community]:
+            p = self.policies.get(pid)
+            if p:
+                events.extend(p.events)
+        self.events_by_community[best_community] = events
+
 
     def _weighted_match_score(self, event, request) -> float:
         score = 0.0
+
         def val(x): return x.value.strip().lower()
 
         if val(event.subject) == "*" or val(event.subject) == val(request.subject):
@@ -43,9 +120,12 @@ class CommunityPolicyEvaluator:
             score += self.attribute_weights.get("recurso", 0)
         if val(event.space) == "*" or val(event.space) == val(request.space):
             score += self.attribute_weights.get("ubicacion", 0)
+        if val(event.time) == "*" or val(event.time) == val(request.time):
+            score += self.attribute_weights.get("rango_horario", 0)
         if val(event.action) == "*" or val(event.action) == val(request.action):
             score += self.attribute_weights.get("accion", 0)
 
+        '''
         if val(event.time) == "*":
             score += self.attribute_weights.get("rango_horario", 0)
         elif "-" in val(event.time):
@@ -59,15 +139,12 @@ class CommunityPolicyEvaluator:
                     score += self.attribute_weights.get("rango_horario", 0)
             except:
                 pass
-
+        '''
         return score
 
     def find_best_community(self, request: AccessRequest) -> str:
         best_community = None
         best_score = -1
-
-        # print("\n Buscando mejor comunidad para la solicitud (ponderado por entropía):")
-        # print(f"   {request}")
 
         for community_id, policy_ids in self.policies_by_community.items():
             max_score_in_community = 0.0
@@ -82,13 +159,10 @@ class CommunityPolicyEvaluator:
                     if score > max_score_in_community:
                         max_score_in_community = score
 
-            # print(f"   - Comunidad {community_id}: mejor score {max_score_in_community:.4f}")
-
             if max_score_in_community > best_score:
                 best_score = max_score_in_community
                 best_community = community_id
 
-        # print(f" Comunidad seleccionada: {best_community} (score: {best_score:.4f})")
         return best_community
 
     def order_policies_by_similarity(self, community_id: str, request: AccessRequest) -> List[str]:
@@ -106,18 +180,12 @@ class CommunityPolicyEvaluator:
             similarity_scores[pid] = max_score
 
         sorted_policies = sorted(similarity_scores.keys(), key=lambda pid: similarity_scores[pid], reverse=True)
-
-        # print("\n Orden de políticas en comunidad", community_id, "(ordenadas por similitud con solicitud)")
-        # for idx, pid in enumerate(sorted_policies, 1):
-        #     print(f"   {idx}. Política {pid} - Score {similarity_scores[pid]:.4f}")
-
         return sorted_policies
 
     def evaluate(self, request: AccessRequest) -> dict:
         best_community = self.find_best_community(request)
 
         if best_community is None:
-            # print(" No se encontró comunidad para esta solicitud.\n")
             return {
                 "result": "deny",
                 "policy_id": None,
@@ -126,8 +194,6 @@ class CommunityPolicyEvaluator:
 
         sorted_policies = self.order_policies_by_similarity(best_community, request)
 
-        # print("\n Evaluando solicitud en comunidad", best_community)
-
         for idx, pid in enumerate(sorted_policies, 1):
             policy = self.policies.get(pid)
             if not policy:
@@ -135,14 +201,12 @@ class CommunityPolicyEvaluator:
 
             for event in policy.events:
                 if EventMatcher.match_event(event, request):
-                    # print(f" Coincidencia encontrada en política {policy.policy_id} (posición {idx}) evento {event.event_id}")
                     return {
                         "result": policy.effect,
                         "policy_id": policy.policy_id,
                         "event_id": event.event_id
                     }
 
-        # print(" No se encontró coincidencia en comunidad.\n")
         return {
             "result": "deny",
             "policy_id": None,
