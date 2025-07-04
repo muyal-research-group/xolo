@@ -38,7 +38,8 @@ class EventMatcher:
 
         # Comparación especial para el tiempo
         if attr_event == "rango_horario":
-            return EventMatcher.is_time_in_range(val_event, val_req)
+            #return EventMatcher.is_time_in_range(val_event, val_req)
+            return val_event == val_req or val_event == "*"
 
         # Comparación exacta
         return val_event == val_req
