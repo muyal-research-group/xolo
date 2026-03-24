@@ -18,7 +18,7 @@ class DumbLogger(object):
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
-        thread_id = threading.current_thread().getName()
+        thread_id = threading.current_thread().name
         log_data = {
             'timestamp': self.formatTime(record),
             'level': record.levelname,

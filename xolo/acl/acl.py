@@ -47,7 +47,15 @@ class AclDaemon(Thread):
                     "ok": value
                 })
 
+
+
+
 class Acl(object):
+    PERM_READ = "read"
+    PERM_WRITE = "write"
+    PERM_DELETE = "delete"
+    PERM_MANAGE = "sys:manage"  # The "Owner" permission
+    
     def __init__(
             self,
             roles:Set[str] = set(),
@@ -185,7 +193,67 @@ class Acl(object):
 
     def show(self)->Dict[str, Dict[str, Set[str]]]:
         return self.__grants
+    
+    def claim_ownership(self, actor: str, resource: str):
+            """
+            Call this immediately when a user creates a new Folder/Bucket.
+            It makes them the 'Owner'.
+            """
+            # We use the raw parent method because this is the genesis event
+            self.grant(actor, resource, Acl.PERM_MANAGE)
+            self.grant(actor, resource, Acl.PERM_READ)
+            self.grant(actor, resource, Acl.PERM_WRITE)
+            self.grant(actor, resource, Acl.PERM_DELETE)
+        
+    def grant_as_owner(self, actor: str, target_user: str, resource: str, permission: str) -> Result[bool, str]:
+        """
+        The SAFE way to grant permissions. 
+        Checks if 'actor' has 'sys:owner' first.
+        """
+        # 1. REUSE your existing check() method logic
+        # Check if the 'actor' (the person trying to share) is actually an owner
+        if self.check(role=actor, resource=resource, permission=Acl.PERM_MANAGE):
+            
+            # 2. REUSE your existing grant() method logic
+            self.grant(target_user, resource, permission)
+            return Ok(True)
+            
+        else:
+            return Err(f"Access Denied: User '{actor}' is not the owner of '{resource}'")
+    
+    def revoke_as_owner(self, actor: str, target_user: str, resource: str, permission: str) -> Result[bool, str]:
+        """
+        The SAFE way to revoke permissions.
+        """
+        # 1. Allow users to remove THEMSELVES (optional, but good UX)
+        if actor == target_user:
+            if permission == Acl.PERM_MANAGE and self._is_last_owner(resource):
+                return Err("Cannot remove the last owner. Assign a new owner first.")
+            self.revoke(target_user, resource, permission)
+            return Ok(True)
 
+        # 2. Check Ownership
+        if self.check(role=actor, resource=resource, permission=Acl.PERM_MANAGE):
+            # Safety: Don't allow revoking the last owner (prevents locking everyone out)
+            if permission == Acl.PERM_MANAGE and self._is_last_owner(resource):
+                return Err("Cannot remove the last owner. Assign a new owner first.")
+            
+            self.revoke(target_user, resource, permission)
+            return Ok(True)
+        else:
+            return Err(f"Access Denied: User '{actor}' is not the owner of '{resource}'")
+
+    def _is_last_owner(self, resource: str) -> bool:
+        """
+        Helper to ensure we don't accidentally delete the only admin.
+        """
+        # REUSE your existing show() method to inspect data
+        count = 0
+        all_grants = self.show() 
+        for role, resources in all_grants.items():
+            if resource in resources and Acl.PERM_MANAGE in resources[resource]:
+                count += 1
+        return count <= 1
     @staticmethod
     def __write_and_encrypt(secret_key:bytes, raw_data:bytes, output_path:str,full_path:str)->Result[bool,Exception]:
         res = Utils.encrypt_aes(key=secret_key, data= raw_data)
