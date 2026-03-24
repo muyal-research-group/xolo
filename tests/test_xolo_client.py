@@ -1,11 +1,9 @@
 import os
-import pandas as pd
 from typing import  Generator
-import secrets
 from xolo.client.client import XoloClient
-from xolo.utils import Utils
 import pytest
 from dotenv import load_dotenv
+from uuid import uuid4
 
 ENV_PATH = os.environ.get("ENV_PATH","/home/nacho/Programming/Python/xolo/tests/.env")
 if os.path.exists(ENV_PATH):
@@ -13,17 +11,35 @@ if os.path.exists(ENV_PATH):
 # from xolo.log import Log
 
 
-xolo_client = XoloClient(
-    hostname = os.environ.get("XOLO_API_HOSTNAME","localhost"),
-    port     = int(os.environ.get("XOLO_API_PORT","10001")),
-    version  = int(os.environ.get("XOLO_API_VERSION","4"))
-)
+@pytest.fixture(scope="module")
+def xolo_client() -> Generator[XoloClient,None,None]:
+     client = XoloClient(
+        hostname = os.environ.get("XOLO_API_HOSTNAME","localhost"),
+        port     = int(os.environ.get("XOLO_API_PORT","10001")),
+        version  = int(os.environ.get("XOLO_API_VERSION","4"))
+    )
+     yield client
+@pytest.mark.skip("")
+def test_execute_script(xolo_client:XoloClient):
+    script = """
+    CREATE USER 'test' WITH PASSWORD='testpassword'
+    UPDATE USER 'test' SET email='test@example.com'
+    DELETE USER 'test'
+    CREATE SCOPE 'testscope'
+    """
+    # ASSIGN SCOPE 'testscope' TO USER 'test'
+    # CREATE LICENSE FOR USER 'test' IN SCOPE 'testscope' EXPIRES IN '1h'
+    # GRANT 'read' ON 'resource1' TO ROLE 'testrole'
+    # REVOKE 'write' ON 'resource2' FROM ROLE 'testrole'
+    # LOAD ABAC POLICY FROM FILE '/path/to/policy.json' AS 'policy1'
+    # EVALUATE REQUEST 'request1' AGAINST POLICY 'policy1'
+    # ENCRYPT FILE '/path/to/plain.txt' AS '/path/to/encrypted.enc' WITH KEY 'encryptionkey'
+    # DECRYPT FILE '/path/to/encrypted.enc' AS '/path
+    cmds = xolo_client.execute_script(script_text=script)
 
-    # hostname = os.environ.get("XOLO_API_HOSTNAME","alpha.tamps.cinvestav.mx/xoloapi"),
-    # port     = int(os.environ.get("XOLO_API_PORT","-1")),
 
 @pytest.mark.skip("")
-def test_self_delete_license():
+def test_self_delete_license(xolo_client:XoloClient):
     # res =xolo_client.get_resources_by_role(role="test")
     username = "jcastillo"
     scope = "imss"
@@ -51,8 +67,7 @@ def test_self_delete_license():
         print(res.unwrap_err())
     assert res.is_ok
 @pytest.mark.skip("")
-def test_delete_license():
-    # res =xolo_client.get_resources_by_role(role="test")
+def test_delete_license(xolo_client:XoloClient):
     res = xolo_client.delete_license(
         username="jcastillo",
         scope="imss",
@@ -63,22 +78,16 @@ def test_delete_license():
         print(res.unwrap_err())
     assert res.is_ok
 
-@pytest.mark.skip("")
-def test_get_resources():
-    res =xolo_client.get_resources_by_role(role="test")
-    print(res)
-    assert res.is_ok
 
-@pytest.mark.skip("")
-def test_grantx():
-    res =xolo_client.grantx(role="test",grants={"test":{"b1":["read"]}})
-    print(res)
-    assert res.is_ok
 
-@pytest.mark.skip("")
-def test_create_user():
-    username="richi"
-    password="secret"
+
+def test_full_logic(xolo_client:XoloClient):
+    username   = f"richi-{uuid4().hex[:8]}"
+    password   = "secret"
+    secret     = "ed448c7a5449e9603058ce630e26c9e3befb2b15e3692411c001e0b4256852d2"
+    scope      = f"muyal-{uuid4().hex[:8]}"
+    expires_in = "1d"
+    # 
     response = xolo_client.create_user(
         username=username,
         password=password,
@@ -86,83 +95,28 @@ def test_create_user():
         first_name="First Name",
         last_name="Last Name",
         profile_photo="",
-        role="user0",
     )
-    print(response)
-    assert response.is_ok
-
-@pytest.mark.skip("")
-def test_create_scope():
-    scope    = "muyal"
+    assert response.is_ok, "Failed to create user: {}".format(response.unwrap_err())
     response = xolo_client.create_scope(scope=scope)
-    assert response.is_ok
-
-@pytest.mark.skip("")
-def test_assign_scope():
-    username = "richi"
-    scope    = "muyal"
-    secret   = "ed448c7a5449e9603058ce630e26c9e3befb2b15e3692411c001e0b4256852d2"
+    assert response.is_ok, "Failed to create scope: {}".format(response.unwrap_err())
     response = xolo_client.assign_scope(username=username, scope=scope,secret=secret)
-    print(response)
-    assert response.is_ok
-
-@pytest.mark.skip("")
-def test_create_license():
-    username   = "user0"
-    scope      = "muyal"
-    secret     = "ed448c7a5449e9603058ce630e26c9e3befb2b15e3692411c001e0b4256852d2"
-    expires_in = "1h" # 1 Hours
+    assert response.is_ok, "Failed to assign scope: {}".format(response.unwrap_err())
     response = xolo_client.create_license(username=username, scope=scope,secret=secret,expires_in=expires_in)
-    print(response)
-    assert response.is_ok
+    assert response.is_ok, "Failed to create license: {}".format(response.unwrap_err())
 
-@pytest.mark.skip("")
-def test_auth():
-    username = "richi"
-    password = "secret"
-    response = xolo_client.auth(username=username, password=password,scope="Muyal")
-    print(response)
-    assert response.is_ok
-
-@pytest.mark.skip("")
-def test_grant():
-    response = xolo_client.grants(
-        grants={
-            ""
-        }
-    )
-    print(response)
-    assert response.is_ok
-
-@pytest.mark.skip("")
-def test_create_bulk_users():
-    df = pd.read_csv("./data/user_prod.csv")
-    for i, row in df.iterrows():
-        username = row["USERNAME"]
-        res = xolo_client.create_user(
-            username= username,
-            first_name=row["FIRSTNAME"],
-            last_name=row["LASTNAME"],
-            email=row["EMAIL"],
-            password=row["PASSWORD"],
-        )
-        if res.is_ok:
-            print("{} created successfully".format(username))
+    response = xolo_client.auth(username=username, password=password,scope=scope,expiration=expires_in,renew_token=True)
+    assert response.is_ok, "Failed to authenticate user: {}".format(response.unwrap_err())
+    auth = response.unwrap()
     
-def data_generator(num_chunks:int,n:int)->Generator[bytes,None,None]:
-    for i in range(num_chunks):
-        yield secrets.token_bytes(n)
+    response = xolo_client.get_users_resources(token=auth.access_token,temporal_secret=auth.temporal_secret)
+    assert response.is_ok, "Failed to get user dashboard: {}".format(response.unwrap_err())
+    dashboard = response.unwrap()
+    print(dashboard)
 
-@pytest.mark.skip("")
-def test_sha256_stream():
-    num_chunks = 5
-    n = 1000
-
-    data = data_generator(num_chunks=num_chunks,n = n)
-    (checksum ,size)= Utils.sha256_stream(gen= data)
-    print(checksum,size)
-    assert (num_chunks*n) == size
-
-
-
-
+    response = xolo_client.get_current_user(
+        token           = auth.access_token,
+        temporal_secret = auth.temporal_secret,
+    )
+    assert response.is_ok, "Failed to get user info: {}".format(response.unwrap_err())
+    user_info = response.unwrap()
+    print(user_info)
