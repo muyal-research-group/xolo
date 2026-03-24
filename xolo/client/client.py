@@ -270,7 +270,7 @@ class XoloClient(object):
         owned_page_size: int = 10,
         shared_page: int = 1,
         shared_page_size: int = 10,
-    ) -> Result[M.UserResourcesDetailsDTO, E.XError]:
+    ) -> Result[M.UsersResourcesDTO, E.XError]:
         """
         Retrieves the resources information for the authenticated user.
         """
@@ -284,7 +284,7 @@ class XoloClient(object):
             response = R.get(url=url, headers=headers)
             response.raise_for_status()
             
-            return Ok(M.UserResourcesDetailsDTO(**response.json()))
+            return Ok(M.UsersResourcesDTO(**response.json()))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
