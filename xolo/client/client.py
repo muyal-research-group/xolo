@@ -109,7 +109,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def disable_user(self,username:str,token:str,temporal_secret:str)->Result[bool,E.XError]:
         try:
@@ -128,10 +128,10 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
         
         
-    def verify_token(self,access_token:str,username:str,secret:str="")->bool:
+    def verify_token(self,access_token:str,username:str,secret:str="")->Result[bool,E.XError]:
         try:
             url  = "{}/api/v{}/users/verify".format(self.base_url(),self.version)
             data = {
@@ -141,11 +141,11 @@ class XoloClient(object):
             }
             response = R.post(url=url,json=data)
             response.raise_for_status()
-            return True
+            return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return False
+            return Err(E.XError.from_exception(e))
 
 
     def auth(self,
@@ -167,14 +167,13 @@ class XoloClient(object):
             response = R.post(url=url, json=data)
             response.raise_for_status()
             data_json = response.json()
-            print("[DEBUG] Auth response data:", data_json)
             return Ok(
                 M.AuthenticatedDTO.model_validate(data_json)
             )
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_license(
         self,
@@ -201,7 +200,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_scope(self,scope:str,secret:str="")->Result[bool, E.XError]:
         try:
@@ -216,7 +215,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     def assign_scope(self,
         username:str, 
         scope:str,
@@ -237,7 +236,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     
     def get_current_user(self,token:str,temporal_secret:str)->Result[M.UserDTO,E.XError]:
@@ -256,7 +255,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     # ACL
     
     # ==========================================
@@ -288,7 +287,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_group(self, name: str, description: str, token: str,temporal_secret: str) -> Result[str, E.XError]:
         """
@@ -313,7 +312,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def delete_group(self, group_id: str, token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -333,7 +332,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def add_members_to_group(self, group_id: str, members: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -356,7 +355,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def remove_members_from_group(self, group_id: str, members: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -380,7 +379,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def grant_permission(self, 
                          resource_id: str, 
@@ -407,14 +406,14 @@ class XoloClient(object):
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def revoke_permission(self, 
                           resource_id: str, 
@@ -448,7 +447,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def claim_resource(self, resource_id: str, token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -471,7 +470,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def check_permission_auth(self, resource_id: str, permissions: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -497,7 +496,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     
 
@@ -521,7 +520,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
      
     def self_delete_license(self,username:str, scope:str,token:str,secret:str,force:bool = True)->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
@@ -542,4 +541,4 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
