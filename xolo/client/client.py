@@ -73,16 +73,16 @@ class XoloClient(object):
     )->Result[M.CreatedUserResponseDTO,E.XError]:
         try:
             url  = "{}/api/v{}/users".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "username":username,
                 "first_name":first_name,
                 "last_name":last_name,
                 "email":email,
                 "password":password,
                 "profile_photo":profile_photo,
-            })
+            }
             
-            response = R.post(url=url,data=data)
+            response = R.post(url=url,json=data)
             response.raise_for_status()
             data = M.CreatedUserResponseDTO.model_validate(response.json())
 
@@ -96,14 +96,14 @@ class XoloClient(object):
         try:
             url  = f"{self.base_url()}/api/v{self.version}/users/{username}/enable"
 
-            data = J.dumps({
+            data = {
                 "username":username,
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
-            response = R.post(url=url,data=data,headers=headers)
+            response = R.post(url=url,json=data,headers=headers)
             response.raise_for_status()
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
@@ -115,14 +115,14 @@ class XoloClient(object):
         try:
             url  = f"{self.base_url()}/api/v{self.version}/users/{username}/disable"
 
-            data = J.dumps({
+            data ={
                 "username":username,
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
-            response = R.post(url=url,data=data,headers=headers)
+            response = R.post(url=url,json=data,headers=headers)
             response.raise_for_status()
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
@@ -134,12 +134,12 @@ class XoloClient(object):
     def verify_token(self,access_token:str,username:str,secret:str="")->bool:
         try:
             url  = "{}/api/v{}/users/verify".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "access_token":access_token,
                 "username":username,
                 "secret":secret
-            })
-            response = R.post(url=url,data=data)
+            }
+            response = R.post(url=url,json=data)
             response.raise_for_status()
             return True
         except R.exceptions.HTTPError as http_err:
@@ -157,14 +157,14 @@ class XoloClient(object):
     )->Result[M.AuthenticatedDTO,E.XError]:
         try:
             url = "{}/api/v{}/users/auth".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "username":username,
                 "password":password,
                 "scope":scope,
                 "expiration":expiration,
                 "renew_token":renew_token
-            })
-            response = R.post(url=url,data=data)
+            }
+            response = R.post(url=url, json=data)
             response.raise_for_status()
             data_json = response.json()
             print("[DEBUG] Auth response data:", data_json)
@@ -185,14 +185,14 @@ class XoloClient(object):
         force:bool = True,
     )->Result[M.AssignLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses/"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/licenses"
+            data = {
                 "username":username,
                 "scope":scope,
                 "expires_in":expires_in,
                 "force":force
-            })
-            response = R.post(url=url, data = data, headers={"Secret": secret})
+            }
+            response = R.post(url=url, json = data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.AssignLicenseResponseDTO(
@@ -206,10 +206,10 @@ class XoloClient(object):
     def create_scope(self,scope:str,secret:str="")->Result[bool, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/scopes"
-            data = J.dumps({
+            data ={
                 "name":scope
-            })
-            response = R.post(url =url, data=data, headers={"Secret": secret})
+            }
+            response = R.post(url =url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(True)
@@ -224,11 +224,11 @@ class XoloClient(object):
     )->Result[M.AssignedScopeResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/scopes/assign"
-            data = J.dumps({
+            data = {
                 "username":username,
                 "name":scope
-            })
-            response = R.post(url =url, data=data, headers={"Secret": secret})
+            }
+            response = R.post(url =url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(
@@ -296,17 +296,17 @@ class XoloClient(object):
         Returns: The new group_id.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups"
+            data = {
                 "name": name,
                 "description": description
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(response.json().get("group_id"))
@@ -320,7 +320,7 @@ class XoloClient(object):
         Deletes a Security Group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}"
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -340,16 +340,16 @@ class XoloClient(object):
         Adds a list of user IDs to a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}/members"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            data = {
                 "members": members
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
@@ -363,17 +363,17 @@ class XoloClient(object):
         Removes a list of user IDs from a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}/members"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            data = {
                 "members": members
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
             # Note: We send a body with DELETE
-            response = R.delete(url=url, data=data, headers=headers)
+            response = R.delete(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
@@ -396,12 +396,12 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/grant"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "principal_id": principal_id,
                 "principal_type": principal_type,
                 "permissions": permissions
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -429,19 +429,19 @@ class XoloClient(object):
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/revoke"
             # Note: The controller expects 'GrantOrRevokePermissionDTO' structure
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "principal_id": principal_id,
                 "permissions": permissions,
                 "principal_type": "USER" # Field required by DTO but ignored by revoke logic often
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
             # Note: We send a body with DELETE
-            response = R.delete(url=url, data=data, headers=headers)
+            response = R.delete(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
@@ -456,15 +456,15 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/claim"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
@@ -480,17 +480,17 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/check"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "permissions": permissions,
                 "role": "" # Unused by controller when 'me' is present, but DTO might require it
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(response.json().get("has_permission", False))
@@ -507,12 +507,12 @@ class XoloClient(object):
     def delete_license(self,username:str, scope:str,force:bool = True,secret:str="")->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/licenses/"
-            data = J.dumps({
+            data = {
                 "username":username,
                 "scope":scope,
                 "force":force
-            })
-            response = R.delete(url=url, data = data, headers={"Secret": secret})
+            }
+            response = R.delete(url=url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.DeletedLicenseResponseDTO(
@@ -526,14 +526,14 @@ class XoloClient(object):
     def self_delete_license(self,username:str, scope:str,token:str,secret:str,force:bool = True)->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/licenses/self"
-            data = J.dumps({
+            data = {
                 "token":token,
                 "tmp_secret_key":secret,
                 "username":username,
                 "scope":scope,
                 "force":force
-            })
-            response = R.delete(url=url, data = data) 
+            }
+            response = R.delete(url=url, json=data) 
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.DeletedLicenseResponseDTO(
