@@ -1,14 +1,14 @@
 # xolo/client/client.py
 import requests as R
-import json as J
 import sys
 from typing import Dict,List
 import xolo.client.models as M
-from option import Result,Ok,Err,Some
+from option import Result,Ok,Err
 from xolo.policies.parser import build_parser
 from xolo.policies.parser.models import Command
 import xolo.client.errors as E
 import pyparsing as pp
+import commonx.dto.xolo as XoloDTO
 
 
 class XoloClient(object):
@@ -57,6 +57,38 @@ class XoloClient(object):
             )
         return E.XError.from_code(code=status_code,raw_detail=str(error_detail),headers=e.response.headers,metadata={})
     
+    def signup(self,
+               username:str,
+               first_name:str,
+               last_name:str,
+               email:str,
+               password:str,
+               scope:str,
+               profile_photo:str="",
+               expiration:str="1h"
+    )->Result[M.CreatedUserResponseDTO,E.XError]:
+        try:
+            url = f"{self.base_url()}/users/signup"
+            payload = XoloDTO.SignUpDTO(
+                email         = email.strip(),
+                username      = username.strip(),
+                first_name    = first_name.strip(),
+                last_name     = last_name.strip(),
+                password      = password.strip(),
+                profile_photo = profile_photo.strip(),
+                scope         = scope.upper().strip(),
+                expiration    = expiration.strip()
+            )
+            response = R.post(url=url,json=payload.model_dump())
+
+            response.raise_for_status()
+            data = M.CreatedUserResponseDTO.model_validate(response.json())
+            return Ok(data)
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XError.from_exception(e))
+
     def create_user(self,
                     username:str,
                     first_name:str,
