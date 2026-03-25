@@ -73,16 +73,16 @@ class XoloClient(object):
     )->Result[M.CreatedUserResponseDTO,E.XError]:
         try:
             url  = "{}/api/v{}/users".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "username":username,
                 "first_name":first_name,
                 "last_name":last_name,
                 "email":email,
                 "password":password,
                 "profile_photo":profile_photo,
-            })
+            }
             
-            response = R.post(url=url,data=data)
+            response = R.post(url=url,json=data)
             response.raise_for_status()
             data = M.CreatedUserResponseDTO.model_validate(response.json())
 
@@ -96,56 +96,56 @@ class XoloClient(object):
         try:
             url  = f"{self.base_url()}/api/v{self.version}/users/{username}/enable"
 
-            data = J.dumps({
+            data = {
                 "username":username,
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
-            response = R.post(url=url,data=data,headers=headers)
+            response = R.post(url=url,json=data,headers=headers)
             response.raise_for_status()
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def disable_user(self,username:str,token:str,temporal_secret:str)->Result[bool,E.XError]:
         try:
             url  = f"{self.base_url()}/api/v{self.version}/users/{username}/disable"
 
-            data = J.dumps({
+            data ={
                 "username":username,
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
-            response = R.post(url=url,data=data,headers=headers)
+            response = R.post(url=url,json=data,headers=headers)
             response.raise_for_status()
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
         
         
-    def verify_token(self,access_token:str,username:str,secret:str="")->bool:
+    def verify_token(self,access_token:str,username:str,secret:str="")->Result[bool,E.XError]:
         try:
             url  = "{}/api/v{}/users/verify".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "access_token":access_token,
                 "username":username,
                 "secret":secret
-            })
-            response = R.post(url=url,data=data)
+            }
+            response = R.post(url=url,json=data)
             response.raise_for_status()
-            return True
+            return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return False
+            return Err(E.XError.from_exception(e))
 
 
     def auth(self,
@@ -157,24 +157,23 @@ class XoloClient(object):
     )->Result[M.AuthenticatedDTO,E.XError]:
         try:
             url = "{}/api/v{}/users/auth".format(self.base_url(),self.version)
-            data = J.dumps({
+            data = {
                 "username":username,
                 "password":password,
                 "scope":scope,
                 "expiration":expiration,
                 "renew_token":renew_token
-            })
-            response = R.post(url=url,data=data)
+            }
+            response = R.post(url=url, json=data)
             response.raise_for_status()
             data_json = response.json()
-            print("[DEBUG] Auth response data:", data_json)
             return Ok(
                 M.AuthenticatedDTO.model_validate(data_json)
             )
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_license(
         self,
@@ -185,14 +184,14 @@ class XoloClient(object):
         force:bool = True,
     )->Result[M.AssignLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses/"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/licenses"
+            data = {
                 "username":username,
                 "scope":scope,
                 "expires_in":expires_in,
                 "force":force
-            })
-            response = R.post(url=url, data = data, headers={"Secret": secret})
+            }
+            response = R.post(url=url, json = data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.AssignLicenseResponseDTO(
@@ -201,22 +200,22 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_scope(self,scope:str,secret:str="")->Result[bool, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/scopes"
-            data = J.dumps({
+            data ={
                 "name":scope
-            })
-            response = R.post(url =url, data=data, headers={"Secret": secret})
+            }
+            response = R.post(url =url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     def assign_scope(self,
         username:str, 
         scope:str,
@@ -224,11 +223,11 @@ class XoloClient(object):
     )->Result[M.AssignedScopeResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/scopes/assign"
-            data = J.dumps({
+            data = {
                 "username":username,
                 "name":scope
-            })
-            response = R.post(url =url, data=data, headers={"Secret": secret})
+            }
+            response = R.post(url =url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(
@@ -237,7 +236,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     
     def get_current_user(self,token:str,temporal_secret:str)->Result[M.UserDTO,E.XError]:
@@ -256,7 +255,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     # ACL
     
     # ==========================================
@@ -288,7 +287,7 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     def create_group(self, name: str, description: str, token: str,temporal_secret: str) -> Result[str, E.XError]:
         """
@@ -296,31 +295,31 @@ class XoloClient(object):
         Returns: The new group_id.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups"
+            data = {
                 "name": name,
                 "description": description
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(response.json().get("group_id"))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def delete_group(self, group_id: str, token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
         Deletes a Security Group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}"
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -333,54 +332,54 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def add_members_to_group(self, group_id: str, members: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
         Adds a list of user IDs to a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}/members"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            data = {
                 "members": members
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def remove_members_from_group(self, group_id: str, members: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
         Removes a list of user IDs from a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/group/{group_id}/members"
-            data = J.dumps({
+            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            data = {
                 "members": members
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
             # Note: We send a body with DELETE
-            response = R.delete(url=url, data=data, headers=headers)
+            response = R.delete(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def grant_permission(self, 
                          resource_id: str, 
@@ -396,25 +395,25 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/grant"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "principal_id": principal_id,
                 "principal_type": principal_type,
                 "permissions": permissions
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def revoke_permission(self, 
                           resource_id: str, 
@@ -429,26 +428,26 @@ class XoloClient(object):
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/revoke"
             # Note: The controller expects 'GrantOrRevokePermissionDTO' structure
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "principal_id": principal_id,
                 "permissions": permissions,
                 "principal_type": "USER" # Field required by DTO but ignored by revoke logic often
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
             # Note: We send a body with DELETE
-            response = R.delete(url=url, data=data, headers=headers)
+            response = R.delete(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def claim_resource(self, resource_id: str, token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -456,22 +455,22 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/claim"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(True)
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
 
     def check_permission_auth(self, resource_id: str, permissions: List[str], token: str, temporal_secret: str) -> Result[bool, E.XError]:
         """
@@ -480,24 +479,24 @@ class XoloClient(object):
         """
         try:
             url = f"{self.base_url()}/api/v{self.version}/users/check"
-            data = J.dumps({
+            data = {
                 "resource_id": resource_id,
                 "permissions": permissions,
                 "role": "" # Unused by controller when 'me' is present, but DTO might require it
-            })
+            }
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
             }
             
-            response = R.post(url=url, data=data, headers=headers)
+            response = R.post(url=url, json=data, headers=headers)
             response.raise_for_status()
             
             return Ok(response.json().get("has_permission", False))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
     
     
 
@@ -507,12 +506,12 @@ class XoloClient(object):
     def delete_license(self,username:str, scope:str,force:bool = True,secret:str="")->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/licenses/"
-            data = J.dumps({
+            data = {
                 "username":username,
                 "scope":scope,
                 "force":force
-            })
-            response = R.delete(url=url, data = data, headers={"Secret": secret})
+            }
+            response = R.delete(url=url, json=data, headers={"Secret": secret})
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.DeletedLicenseResponseDTO(
@@ -521,19 +520,19 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))
      
     def self_delete_license(self,username:str, scope:str,token:str,secret:str,force:bool = True)->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
             url = f"{self.base_url()}/api/v{self.version}/licenses/self"
-            data = J.dumps({
+            data = {
                 "token":token,
                 "tmp_secret_key":secret,
                 "username":username,
                 "scope":scope,
                 "force":force
-            })
-            response = R.delete(url=url, data = data) 
+            }
+            response = R.delete(url=url, json=data) 
             response.raise_for_status()
             json_data = response.json()
             return Ok(M.DeletedLicenseResponseDTO(
@@ -542,4 +541,4 @@ class XoloClient(object):
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
-            return Err(e)
+            return Err(E.XError.from_exception(e))

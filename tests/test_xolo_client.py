@@ -15,7 +15,7 @@ if os.path.exists(ENV_PATH):
 def xolo_client() -> Generator[XoloClient,None,None]:
      client = XoloClient(
         hostname = os.environ.get("XOLO_API_HOSTNAME","localhost"),
-        port     = int(os.environ.get("XOLO_API_PORT","10001")),
+        port     = int(os.environ.get("XOLO_API_PORT","10000")),
         version  = int(os.environ.get("XOLO_API_VERSION","4"))
     )
      yield client
@@ -89,12 +89,12 @@ def test_full_logic(xolo_client:XoloClient):
     expires_in = "1d"
     # 
     response = xolo_client.create_user(
-        username=username,
-        password=password,
-        email="user0@email.com",
-        first_name="First Name",
-        last_name="Last Name",
-        profile_photo="",
+        username      = username,
+        password      = password,
+        email         = "user0@email.com",
+        first_name    = "First Name",
+        last_name     = "Last Name",
+        profile_photo = "",
     )
     assert response.is_ok, "Failed to create user: {}".format(response.unwrap_err())
     response = xolo_client.create_scope(scope=scope)

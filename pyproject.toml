@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xolo"
-version = "0.0.10a18"
+version = "0.0.10a19"
 description = ""
 authors = ["Ignacio Castillo <jcastillo@mictlanx.com>"]
 readme = "README.md"
@@ -17,7 +17,7 @@ python-dotenv = "^1.1.0"
 networkx = "^3.4.2"
 pydantic = "^2.11.4"
 pyparsing = "^3.2.5"
-commonx = "0.0.1a1"
+commonx = "0.0.1a2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
