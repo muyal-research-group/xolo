@@ -241,7 +241,7 @@ class XoloClient(object):
     
     def get_current_user(self,token:str,temporal_secret:str)->Result[M.UserDTO,E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/"
+            url = f"{self.base_url()}/api/v{self.version}/users"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -498,14 +498,9 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XError.from_exception(e))
     
-    
-
-    
-
-
     def delete_license(self,username:str, scope:str,force:bool = True,secret:str="")->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses/"
+            url = f"{self.base_url()}/api/v{self.version}/licenses"
             data = {
                 "username":username,
                 "scope":scope,
