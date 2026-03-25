@@ -359,7 +359,12 @@ class Acl(object):
     def load_or_create(key:str, output_path:str,filename:str="xolo-acl.enc",heartbeat="15min") -> "Acl":
         try:
             secret_key            = bytes.fromhex(key)
-            os.makedirs(output_path,exist_ok=True)
+            if not os.path.exists(output_path):
+                try:    
+                    os.makedirs(output_path,exist_ok=True)
+                except Exception as e:
+                    raise Exception("Cannot create output directory: {}".format(str(e)))
+                
             path = "{}/{}".format(output_path,filename)
             if not os.path.exists(path=path):
                 # f = open(path,"wb")

@@ -1,11 +1,12 @@
 import pytest
 from xolo.acl.acl import Acl
+import os
 
 @pytest.fixture()
 def acl():
-    output_path = "/xolo"
+    output_path = os.environ.get("XOLO_OUTPUT_PATH", "/xolo")
     filename    = "xolotest.enc"
-    fullpath    = "{}/{}".format(output_path,filename)
+    # fullpath    = "{}/{}".format(output_path,filename)
     acl = Acl.load_or_create(
         output_path = output_path,
         key         = "ceb2d1e79b1edefa82ffa54b94b5bf911b534a8e6e60d0ce6bdeac72192c7d9b",
