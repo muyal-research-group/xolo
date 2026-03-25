@@ -1,12 +1,8 @@
-import pytest
-from xolo.abac.models import Policy,AccessRequest
-from xolo.abac.loader import PolicyLoader,AccessRequestLoader
-from xolo.abac.graph import GraphBuilder
-from xolo.abac.communities import CommunityDetector
+from xolo.abac.loader import PolicyLoader
 from xolo.abac.evaluator import CommunityPolicyEvaluator
 
 
-ps = PolicyLoader.from_file("/home/nacho/Programming/Python/ABAC/data/policies.json")
+ps = PolicyLoader.from_file("tests/policies/policies.json")
 ce = CommunityPolicyEvaluator(
     policies= ps
 )

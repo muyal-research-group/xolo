@@ -1,11 +1,9 @@
-import os
 import pytest
-import time as T
 from xolo.acl.acl import Acl
 
 @pytest.fixture()
 def acl():
-    output_path = "/mictlanx/xolo"
+    output_path = "/xolo"
     filename    = "xolotest.enc"
     fullpath    = "{}/{}".format(output_path,filename)
     acl = Acl.load_or_create(

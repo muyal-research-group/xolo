@@ -16,7 +16,6 @@ class XoloClient(object):
         self.api_url = api_url
         self.secret   = secret
         self.parser  = build_parser()
-        # self.executor = XoloExecutor(client=self,secret=secret)
 
     def execute_script(self,script_text:str)->List:
         """Parses a full script and returns a list of command objects."""
@@ -44,10 +43,6 @@ class XoloClient(object):
 
     def base_url(self):
         return self.api_url
-        # if self.port == -1:
-            # return "https://{}".format(self.api_url)
-        # else:
-            # return "http://{}:{}".format(self.api_url,self.port)
 
     def __process_exception(self,e:R.HTTPError)->E.XError:
         status_code = e.response.status_code
