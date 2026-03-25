@@ -78,7 +78,25 @@ def test_delete_license(xolo_client:XoloClient):
 
 
 
-
+def test_signup(xolo_client:XoloClient):
+    username   = f"richi-{uuid4().hex[:8]}"
+    password   = "secret"
+    scope      = f"muyal-{uuid4().hex[:8]}"
+    expires_in = "1d"
+    email      = f"{username}@x.com"
+    response = xolo_client.create_scope(scope=scope)
+    assert response.is_ok, "Failed to create scope: {}".format(response.unwrap_err())
+    response = xolo_client.signup(
+        username      = username,
+        password      = password,
+        email         = email,
+        first_name    = "First Name",
+        last_name     = "Last Name",
+        profile_photo = "",
+        expiration    = expires_in,
+        scope         = scope,
+    )
+    assert response.is_ok, "Failed to sign up user: {}".format(response.unwrap_err())
 def test_full_logic(xolo_client:XoloClient):
     username   = f"richi-{uuid4().hex[:8]}"
     password   = "secret"
@@ -96,6 +114,7 @@ def test_full_logic(xolo_client:XoloClient):
     )
     assert response.is_ok, "Failed to create user: {}".format(response.unwrap_err())
     response = xolo_client.create_scope(scope=scope)
+
     assert response.is_ok, "Failed to create scope: {}".format(response.unwrap_err())
     response = xolo_client.assign_scope(username=username, scope=scope,secret=secret)
     assert response.is_ok, "Failed to assign scope: {}".format(response.unwrap_err())
