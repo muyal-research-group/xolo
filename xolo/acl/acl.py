@@ -363,6 +363,7 @@ class Acl(object):
                 try:    
                     os.makedirs(output_path,exist_ok=True)
                 except Exception as e:
+                    print(e)
                     raise Exception("Cannot create output directory: {}".format(str(e)))
                 
             path = "{}/{}".format(output_path,filename)
@@ -408,7 +409,8 @@ class Acl(object):
                 raise Exception("Descryption error: Check that you are using the correct key")
                 # return Acl.load_or_create(key=key, output_path=output_path,filename="{}.enc".format(Utils.get_random_string(length=5)), heartbeat=heartbeat)
         except PermissionError as e:
-            return Acl.load_or_create(key=key, output_path=output_path,filename="{}.enc".format(Utils.get_random_string(length=5)), heartbeat=heartbeat)
+            raise Exception("Permission error: Check that you have the right permissions to read/write in the output directory")
+            # return Acl.load_or_create(key=key, output_path=output_path,filename="{}.enc".format(Utils.get_random_string(length=5)), heartbeat=heartbeat)
         # except Exception as e:
             
 
