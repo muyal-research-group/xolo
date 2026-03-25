@@ -15,6 +15,7 @@ jobs:
   build:  
     runs-on: ubuntu-latest  
     env:
+      XOLO_OUTPUT_PATH: ${{ github.workspace }}/xolo
       XOLO_LOG_PATH: ${{ github.workspace }}/xolo/log
     strategy:  
       matrix:  
@@ -55,7 +56,8 @@ jobs:
         run: |  
           poetry run coverage run -m pytest  -v -s  
         env:
-          LOG_PATH: ${{ env.XOLO_LOG_PATH }}
+          XOLO_LOG_PATH: ${{ env.XOLO_LOG_PATH }}
+          XOLO_OUTPUT_PATH: ${{ env.XOLO_OUTPUT_PATH }}
       - name: Generate Coverage Report  
         run: |  
           poetry run coverage report -m

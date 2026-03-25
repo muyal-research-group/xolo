@@ -16,11 +16,7 @@ log            = Log(
 
 
 xolo_client = XoloClient(
-    # hostname = os.environ.get("XOLO_API_HOSTNAME","alpha.tamps.cinvestav.mx/xoloapi"),
-    # port     = int(os.environ.get("XOLO_API_PORT","-1")),
-    hostname = os.environ.get("XOLO_API_HOSTNAME","localhost"),
-    port     = int(os.environ.get("XOLO_API_PORT","10001")),
-    version  = int(os.environ.get("XOLO_API_VERSION","4"))
+    api_url = os.environ.get("XOLO_API_URL","http://localhost:10000/api/v4"),
 )
 
 SECRET = os.environ.get("SECRET", "ed448c7a5449e9603058ce630e26c9e3befb2b15e3692411c001e0b4256852d2")

@@ -22,10 +22,11 @@ class AclDaemon(Thread):
         self.filename = filename
         self.last_checksum:Option[str] = NONE
         self.log            = Log(
-            name = name,
-            console_handler_filter=lambda x: True,
-            interval=24,
-            when="h"
+            name                   = name,
+            console_handler_filter = lambda x: True,
+            interval               = 24,
+            when                   = "h",
+            path=os.environ.get("XOLO_LOG_PATH", "/log")
         )
 
     def run(self):
@@ -359,7 +360,13 @@ class Acl(object):
     def load_or_create(key:str, output_path:str,filename:str="xolo-acl.enc",heartbeat="15min") -> "Acl":
         try:
             secret_key            = bytes.fromhex(key)
-            os.makedirs(output_path,exist_ok=True)
+            if not os.path.exists(output_path):
+                try:    
+                    os.makedirs(output_path,exist_ok=True)
+                except Exception as e:
+                    print(e)
+                    raise Exception("Cannot create output directory: {}".format(str(e)))
+                
             path = "{}/{}".format(output_path,filename)
             if not os.path.exists(path=path):
                 # f = open(path,"wb")
@@ -367,10 +374,10 @@ class Acl(object):
                     "grants":{}
                 }).encode("utf-8")
                 res = Acl.__write_and_encrypt(
-                    secret_key=secret_key,
-                    raw_data = data,
+                    secret_key  = secret_key,
+                    raw_data    = data,
                     output_path = output_path,
-                    full_path=path
+                    full_path   = path
                 )
                 # print(res)
                 if res.is_ok:
@@ -403,41 +410,8 @@ class Acl(object):
                 raise Exception("Descryption error: Check that you are using the correct key")
                 # return Acl.load_or_create(key=key, output_path=output_path,filename="{}.enc".format(Utils.get_random_string(length=5)), heartbeat=heartbeat)
         except PermissionError as e:
-            return Acl.load_or_create(key=key, output_path=output_path,filename="{}.enc".format(Utils.get_random_string(length=5)), heartbeat=heartbeat)
-        # except Exception as e:
+            raise Exception("Permission error: Check that you have the right permissions to read/write in the output directory")
+        except Exception as e:
+            print(e)
+            raise Exception("Error loading or creating ACL: {}".format(str(e)))
             
-
-if __name__ =="__main__":
-    acl = Acl(
-        key="ceb2d1e79b1edefa82ffa54b94b5bf911b534a8e6e60d0ce6bdeac72192c7d9b",
-        heartbeat="5sec"
-    )
-    acl.grant(role ="guest",resource = "bucket-2",permission =  "write")
-    print("Roles",acl.get_roles())
-    print("Resources",acl.get_resources())
-    print("Permissions",acl.get_permissions())
-    print("Grants",acl.show())
-    acl.grants(grants= {
-        # "admin":{
-        #     "bucket-0":["write","read"]
-        # },
-        "user":{
-            "bucket-1":["read","delete"]
-        }
-    })
-    T.sleep(1000)
-    # acl.revoke("user","bucket-1","read")
-    # acl.revoke_all("user")
-    print("_"*10)
-    print("Grants",acl.show())
-    print(acl.check("admin","bucket-0","read"))
-    print(acl.check("admin","bucket-0","update"))
-    acl.save(key= "913c839ae0d9d6a72ec96b8b383c18c57f4aeac98f9730511d3b48f9e2680b01",output_path="/sink/mictlanx-acl2")
-    acl2 = Acl.load(key="913c839ae0d9d6a72ec96b8b383c18c57f4aeac98f9730511d3b48f9e2680b01", path="/sink/mictlanx-acl2")
-    if acl2.is_some:
-        print(acl2.unwrap().show())
-    else:
-        print("Error loading acl")
-
-    # print("ACL2",acl2.show())
-    T.sleep(20)

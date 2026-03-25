@@ -12,13 +12,10 @@ import pyparsing as pp
 
 
 class XoloClient(object):
-    def __init__(self,hostname:str,  port:int=-1,version:int=4,secret:str=""):
-        self.hostname = hostname
-        self.port     = port
-        self.version  = version
+    def __init__(self,api_url:str="http://localhost:10000/api/v4",secret:str=""):
+        self.api_url = api_url
         self.secret   = secret
         self.parser  = build_parser()
-        # self.executor = XoloExecutor(client=self,secret=secret)
 
     def execute_script(self,script_text:str)->List:
         """Parses a full script and returns a list of command objects."""
@@ -45,10 +42,7 @@ class XoloClient(object):
         # return results
 
     def base_url(self):
-        if self.port == -1:
-            return "https://{}".format(self.hostname)
-        else:
-            return "http://{}:{}".format(self.hostname,self.port)
+        return self.api_url
 
     def __process_exception(self,e:R.HTTPError)->E.XError:
         status_code = e.response.status_code
@@ -72,7 +66,7 @@ class XoloClient(object):
                     profile_photo:str="",
     )->Result[M.CreatedUserResponseDTO,E.XError]:
         try:
-            url  = "{}/api/v{}/users".format(self.base_url(),self.version)
+            url  = f"{self.base_url()}/users"
             data = {
                 "username":username,
                 "first_name":first_name,
@@ -94,7 +88,7 @@ class XoloClient(object):
 
     def enable_user(self,username:str,token:str,temporal_secret:str)->Result[bool,E.XError]:
         try:
-            url  = f"{self.base_url()}/api/v{self.version}/users/{username}/enable"
+            url  = f"{self.base_url()}/users/{username}/enable"
 
             data = {
                 "username":username,
@@ -113,7 +107,7 @@ class XoloClient(object):
     
     def disable_user(self,username:str,token:str,temporal_secret:str)->Result[bool,E.XError]:
         try:
-            url  = f"{self.base_url()}/api/v{self.version}/users/{username}/disable"
+            url  = f"{self.base_url()}/users/{username}/disable"
 
             data ={
                 "username":username,
@@ -133,7 +127,7 @@ class XoloClient(object):
         
     def verify_token(self,access_token:str,username:str,secret:str="")->Result[bool,E.XError]:
         try:
-            url  = "{}/api/v{}/users/verify".format(self.base_url(),self.version)
+            url  = f"{self.base_url()}/users/verify"
             data = {
                 "access_token":access_token,
                 "username":username,
@@ -156,7 +150,7 @@ class XoloClient(object):
              renew_token:bool=False
     )->Result[M.AuthenticatedDTO,E.XError]:
         try:
-            url = "{}/api/v{}/users/auth".format(self.base_url(),self.version)
+            url = f"{self.base_url()}/users/auth"
             data = {
                 "username":username,
                 "password":password,
@@ -184,7 +178,7 @@ class XoloClient(object):
         force:bool = True,
     )->Result[M.AssignLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses"
+            url = f"{self.base_url()}/licenses"
             data = {
                 "username":username,
                 "scope":scope,
@@ -204,7 +198,7 @@ class XoloClient(object):
     
     def create_scope(self,scope:str,secret:str="")->Result[bool, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/scopes"
+            url = f"{self.base_url()}/scopes"
             data ={
                 "name":scope
             }
@@ -222,7 +216,7 @@ class XoloClient(object):
         secret:str
     )->Result[M.AssignedScopeResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/scopes/assign"
+            url = f"{self.base_url()}/scopes/assign"
             data = {
                 "username":username,
                 "name":scope
@@ -241,7 +235,7 @@ class XoloClient(object):
     
     def get_current_user(self,token:str,temporal_secret:str)->Result[M.UserDTO,E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users"
+            url = f"{self.base_url()}/users"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -274,7 +268,7 @@ class XoloClient(object):
         Retrieves the resources information for the authenticated user.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/acl/resources?owned_page={owned_page}&owned_page_size={owned_page_size}&shared_page={shared_page}&shared_page_size={shared_page_size}"
+            url = f"{self.base_url()}/acl/resources?owned_page={owned_page}&owned_page_size={owned_page_size}&shared_page={shared_page}&shared_page_size={shared_page_size}"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -295,7 +289,7 @@ class XoloClient(object):
         Returns: The new group_id.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/groups"
+            url = f"{self.base_url()}/users/groups"
             data = {
                 "name": name,
                 "description": description
@@ -319,7 +313,7 @@ class XoloClient(object):
         Deletes a Security Group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}"
+            url = f"{self.base_url()}/users/groups/{group_id}"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Temporal-Secret-Key": temporal_secret
@@ -339,7 +333,7 @@ class XoloClient(object):
         Adds a list of user IDs to a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            url = f"{self.base_url()}/users/groups/{group_id}/members"
             data = {
                 "members": members
             }
@@ -362,7 +356,7 @@ class XoloClient(object):
         Removes a list of user IDs from a group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/groups/{group_id}/members"
+            url = f"{self.base_url()}/users/groups/{group_id}/members"
             data = {
                 "members": members
             }
@@ -394,7 +388,7 @@ class XoloClient(object):
         principal_type: "USER" or "GROUP"
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/grant"
+            url = f"{self.base_url()}/users/grant"
             data = {
                 "resource_id": resource_id,
                 "principal_id": principal_id,
@@ -426,7 +420,7 @@ class XoloClient(object):
         Revokes specific permissions from a User or Group.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/revoke"
+            url = f"{self.base_url()}/users/revoke"
             # Note: The controller expects 'GrantOrRevokePermissionDTO' structure
             data = {
                 "resource_id": resource_id,
@@ -454,7 +448,7 @@ class XoloClient(object):
         Claims ownership of a new resource (Bucket/Folder).
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/claim"
+            url = f"{self.base_url()}/users/claim"
             data = {
                 "resource_id": resource_id
             }
@@ -478,7 +472,7 @@ class XoloClient(object):
         Verifies if the token owner has the requested permissions.
         """
         try:
-            url = f"{self.base_url()}/api/v{self.version}/users/check"
+            url = f"{self.base_url()}/users/check"
             data = {
                 "resource_id": resource_id,
                 "permissions": permissions,
@@ -500,7 +494,7 @@ class XoloClient(object):
     
     def delete_license(self,username:str, scope:str,force:bool = True,secret:str="")->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses"
+            url = f"{self.base_url()}/licenses"
             data = {
                 "username":username,
                 "scope":scope,
@@ -519,7 +513,7 @@ class XoloClient(object):
      
     def self_delete_license(self,username:str, scope:str,token:str,secret:str,force:bool = True)->Result[M.DeletedLicenseResponseDTO, E.XError]:
         try:
-            url = f"{self.base_url()}/api/v{self.version}/licenses/self"
+            url = f"{self.base_url()}/licenses/self"
             data = {
                 "token":token,
                 "tmp_secret_key":secret,

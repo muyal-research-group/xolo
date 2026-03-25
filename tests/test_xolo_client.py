@@ -14,9 +14,7 @@ if os.path.exists(ENV_PATH):
 @pytest.fixture(scope="module")
 def xolo_client() -> Generator[XoloClient,None,None]:
      client = XoloClient(
-        hostname = os.environ.get("XOLO_API_HOSTNAME","localhost"),
-        port     = int(os.environ.get("XOLO_API_PORT","10000")),
-        version  = int(os.environ.get("XOLO_API_VERSION","4"))
+        api_url = os.environ.get("XOLO_API_URL","http://localhost:10000/api/v4"),
     )
      yield client
 @pytest.mark.skip("")
