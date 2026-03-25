@@ -24,6 +24,8 @@ pytest = "^8.1.1"
 numpy = "1.24.0"
 pandas = "^1.4.3"
 coverage = "^7.13.5"
+zensical = "^0.0.29"
+mkdocstrings-python = "^2.0.3"
 [[tool.poetry.source]]
 name = "test"
 url = "https://test.pypi.org/simple/"
