@@ -2,7 +2,7 @@
 <img src='assets/logo.png' width=200/>
 </div>
 <div align=center>
-<a href="https://test.pypi.org/project/xolo/"><img src="https://img.shields.io/badge/version-0.0.11a1-green" alt="build - 0.0.11a1"></a>
+<a href="https://test.pypi.org/project/xolo/"><img src="https://img.shields.io/badge/version-0.0.11a2-green" alt="build - 0.0.11a2"></a>
 </div>
 <div align=center>
 	<h1>Xolo: <span style="font-weight:normal;"> An extensible framework for security</span></h1>
