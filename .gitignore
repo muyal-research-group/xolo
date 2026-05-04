@@ -9,3 +9,6 @@ exports/
 *.gexf
 site/
 .cache
+.ruff_cache/
+.claude
+CLAUDE.md
