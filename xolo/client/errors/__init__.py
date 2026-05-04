@@ -1,524 +1,272 @@
-from commonx.errors import *
-# from abc import ABC,abstractmethod
-# from typing import Optional,Dict,Any
-# from pydantic import BaseModel
-# # import f
+from typing import Any, ClassVar
 
-# ERROR_CODES = {
-#     "XOLO.UNKNOWN": -1,
-#     "XOLO.ERROR": 0,
-#     "XOLO.USER_NOT_FOUND": 1001,
-#     "XOLO.USER_ALREADY_EXISTS": 1002,
-#     "XOLO.UNAUTHORIZED": 1003,
-#     "XOLO.INVALID_CREDENTIALS": 1004,
-#     "XOLO.TOKEN_EXPIRED": 1005,
-#     "XOLO.ACCESS_DENIED": 1006,
-#     "XOLO.CREATION_ERROR": 1007,
-#     "XOLO.NOT_FOUND": 1008,
-#     "XOLO.ALREADY_EXISTS": 1009,
-#     "XOLO.SERVER_ERROR": 1010,
-#     "XOLO.INVALID_LICENSE": 1011,   
-# }
+from pydantic import BaseModel, Field
 
 
-# class ErrorDetail(BaseModel):
-#     http_status: int
-#     code: Optional[str] = "XOLO.ERROR"
-#     code_int: Optional[int] = 0
-#     detail: str
-#     raw_error: Optional[str] = None
-#     metadata:Optional[Dict[str,Any]] = {}
-
-# class XoloError(Exception,ABC):
-
-#     def __init__(self, *args,metadata:Dict[str,Any]={}):
-#         super().__init__(*args)
-#         self.metadata = metadata
-
-#     @property
-#     @abstractmethod
-#     def status_code(self)->int:
-#         pass
-#     @property
-#     @abstractmethod
-#     def detail(self) -> ErrorDetail:
-#         """Return the details (message) of the exception."""
-#         pass 
-#     @property
-#     @abstractmethod
-#     def headers(self) -> Optional[dict]:
-#         """Return optional headers for the exception."""
-#         return {}
-
-        
-#     @property
-#     @abstractmethod
-#     def code(self) -> Optional[str]:
-#         """Return an optional error code for the exception."""
-#         return "XOLO.ERROR"
-#     @property
-#     @abstractmethod
-#     def code_int(self) -> Optional[int]:
-#         """Return an optional internal error code for the exception."""
-#         return ERROR_CODES.get(self.code,0)
-    
-#     @staticmethod
-#     def from_exception(exc:Exception)->'XoloError':
-#         if isinstance(exc,XoloError):
-#             return exc
-#         return UnknownError(raw_detail=str(exc))
-#     @staticmethod
-#     def from_code(code:str, raw_detail:Optional[str]=None, headers:Optional[dict]=None,metadata:Optional[dict]={})->'XoloError':
-#         error_class = {
-#             "XOLO.UNKNOWN": UnknownError,
-#             "XOLO.UNAUTHORIZED": Unauthorized,
-#             "XOLO.INVALID_CREDENTIALS": InvalidCredentialsError,
-#             "XOLO.TOKEN_EXPIRED": TokenExpired,
-#             "XOLO.ACCESS_DENIED": AccessDenied,
-#             "XOLO.CREATION_ERROR": CreationError,
-#             "XOLO.NOT_FOUND": NotFound,
-#             "XOLO.ALREADY_EXISTS": AlreadyExists,
-#             "XOLO.SERVER_ERROR": ServerError,
-#             "XOLO.INVALID_LICENSE": InvalidLicense,
-#         }.get(code, UnknownError)
-#         return error_class(raw_detail=raw_detail, headers=headers,metadata=metadata)
-    
-
-#     def __str__(self):
-#         return f"{self.detail.detail} - [{self.status_code}]: {self.code}({self.code_int})"
-
-# class UnknownError(XoloError):
-#     def __init__(self,*args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-
-#     @property
-#     def status_code(self)->int:
-#         return 500
-
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Unknown error occurred",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-    
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.UNKNOWN"
-    
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-    
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
-    
-# class CreationError(XoloError):
-#     def __init__(self,*args,entity:str="Entity",raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata={**metadata,"entity":entity})
-#         self.raw_detail = raw_detail
-#         self._headers = headers
-#     @property
-#     def status_code(self)->int:
-#         return 409
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = f"{self.entity.upper()}: Creation failed due to a conflict or invalid state",
-#             raw_error= self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.CREATION_ERROR"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
-    
-
-# class AccessDenied(XoloError):
-#     def __init__(self,*args,raw_detail:Optional[str]=None,_headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers = _headers
-#     @property
-#     def status_code(self)->int:
-#         return 401
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Access denied: insufficient permissions to perform the requested operation",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.ACCESS_DENIED"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class ErrorDetail(BaseModel):
+    code: str = "XOLO.ERROR"
+    message: str = "Request failed"
+    status_code: int = 500
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    raw_error: str | None = None
 
 
+class XoloError(Exception):
+    code: ClassVar[str] = "XOLO.ERROR"
+    status_code: ClassVar[int] = 500
+    default_message: ClassVar[str] = "Request failed"
 
-# class FailedToRemoveOwner(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args)
-#         self.raw_detail = raw_detail
-#         self._headers = headers
-    
-#     @property
-#     def status_code(self)->int:
-#         return 409
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Failed to remove owner: resource must have at least one owner",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.FAILED_TO_REMOVE_OWNER"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        metadata: dict[str, Any] | None = None,
+        raw_error: str | None = None,
+        headers: dict[str, Any] | None = None,
+    ) -> None:
+        resolved_message = message or self.default_message
+        super().__init__(resolved_message)
+        self.message = resolved_message
+        self.metadata = metadata or {}
+        self.raw_error = raw_error
+        self.headers = headers or {}
 
-# class FailedToClaimResource(XoloError):
-#     def __init__(self,*args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
+    @property
+    def detail(self) -> ErrorDetail:
+        return ErrorDetail(
+            code=self.code,
+            message=self.message,
+            status_code=self.status_code,
+            metadata=self.metadata,
+            raw_error=self.raw_error,
+        )
 
-#     @property
-#     def status_code(self)->int:
-#         return 409
-    
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Failed to claim resource: resource is already claimed by another user",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.FAILED_TO_CLAIM_RESOURCE"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+    @classmethod
+    def from_exception(cls, exc: Exception) -> "XoloError":
+        if isinstance(exc, XoloError):
+            return exc
+        return InternalError(
+            str(exc) or InternalError.default_message,
+            metadata={"exception_type": exc.__class__.__name__},
+            raw_error=str(exc),
+        )
+
+    @classmethod
+    def from_http_response(
+        cls,
+        *,
+        status_code: int,
+        detail: Any,
+        headers: dict[str, Any] | None = None,
+    ) -> "XoloError":
+        if isinstance(detail, dict):
+            return cls.from_code(
+                code=detail.get("code"),
+                message=detail.get("message") or detail.get("msg") or detail.get("detail"),
+                metadata=detail.get("metadata"),
+                raw_error=detail.get("raw_error"),
+                headers=headers,
+                status_code=detail.get("status_code") or detail.get("http_status") or status_code,
+            )
+
+        message = str(detail) if detail not in (None, "") else None
+        return cls.from_status(
+            status_code=status_code,
+            message=message,
+            raw_error=message,
+            headers=headers,
+        )
+
+    @classmethod
+    def from_status(
+        cls,
+        *,
+        status_code: int,
+        message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        raw_error: str | None = None,
+        headers: dict[str, Any] | None = None,
+    ) -> "XoloError":
+        error_cls = STATUS_TO_ERROR.get(status_code, InternalError)
+        return error_cls(
+            message,
+            metadata=metadata,
+            raw_error=raw_error,
+            headers=headers,
+        )
+
+    @classmethod
+    def from_code(
+        cls,
+        *,
+        code: str | int | None,
+        message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        raw_error: str | None = None,
+        headers: dict[str, Any] | None = None,
+        status_code: int | None = None,
+    ) -> "XoloError":
+        normalized_code = cls._normalize_code(code)
+        if normalized_code is not None and normalized_code in CODE_TO_ERROR:
+            error_cls = CODE_TO_ERROR[normalized_code]
+            return error_cls(
+                message,
+                metadata=metadata,
+                raw_error=raw_error,
+                headers=headers,
+            )
+
+        if isinstance(code, int):
+            return cls.from_status(
+                status_code=code,
+                message=message,
+                metadata=metadata,
+                raw_error=raw_error,
+                headers=headers,
+            )
+
+        if status_code is not None:
+            return cls.from_status(
+                status_code=status_code,
+                message=message,
+                metadata=metadata,
+                raw_error=raw_error,
+                headers=headers,
+            )
+
+        return InternalError(
+            message,
+            metadata=metadata,
+            raw_error=raw_error,
+            headers=headers,
+        )
+
+    @staticmethod
+    def _normalize_code(code: str | int | None) -> str | None:
+        if code is None or isinstance(code, int):
+            return None
+
+        normalized = code.strip().upper()
+        alias_map = {
+            "X.UNKNOWN": "XOLO.INTERNAL_ERROR",
+            "X.ERROR": "XOLO.INTERNAL_ERROR",
+            "X.UNAUTHORIZED": "XOLO.UNAUTHORIZED",
+            "X.ACCESS_DENIED": "XOLO.ACCESS_DENIED",
+            "X.NOT_FOUND": "XOLO.NOT_FOUND",
+            "X.ALREADY_EXISTS": "XOLO.ALREADY_EXISTS",
+            "X.SERVER_ERROR": "XOLO.INTERNAL_ERROR",
+            "X.INVALID_LICENSE": "XOLO.INVALID_LICENSE",
+        }
+        return alias_map.get(normalized, normalized)
+
+    def __str__(self) -> str:
+        return f"[{self.code}] {self.message}"
 
 
-# class TokenExpired(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers = headers
-
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Token has expired",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.TOKEN_EXPIRED"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
-    
-#     @property
-#     def status_code(self)->int:
-#         return 401
-
-# class LicenseCreationError(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "License creation failed due to a conflict or invalid state",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.LICENSE_CREATION_ERROR"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def status_code(self)->int:
-#         return 409
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class NotFoundError(XoloError):
+    code = "XOLO.NOT_FOUND"
+    status_code = 404
+    default_message = "Resource not found"
 
 
+class AlreadyExistsError(XoloError):
+    code = "XOLO.ALREADY_EXISTS"
+    status_code = 409
+    default_message = "Resource already exists"
 
-    
-# class NotFound(XoloError):
-#     def __init__(self,*args,entity:str="Entity",raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata={**metadata,"entity":entity})
-#         # self.entity     = entity
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
 
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = f"{self.metadata.get('entity','').title()} not found",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.NOT_FOUND"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-    
-#     @property
-#     def status_code(self)->int:
-#         return 404
-    
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class ConflictError(XoloError):
+    code = "XOLO.CONFLICT"
+    status_code = 409
+    default_message = "Request conflicts with current state"
 
-    
-# class AlreadyExists(XoloError):
-#     def __init__(self,entity:str="Entity",id:Optional[str] = None,*args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata={**metadata,"entity":entity,"id":id})
-#         # self.entity     = entity
-#         # self.id         = id
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
 
-#     @property
-#     def detail(self)->ErrorDetail:
-#         entity = self.metadata.get("entity",'')
-#         id = self.metadata.get("id",'')
-#         detail = f"{entity.title()}{f'[{id}]' if id else ''} already exists"
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = detail,
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def status_code(self)->int:
-#         return 409
-    
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.ALREADY_EXISTS"
-    
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-    
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class UnauthorizedError(XoloError):
+    code = "XOLO.UNAUTHORIZED"
+    status_code = 401
+    default_message = "Unauthorized"
 
-# class Unauthorized(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Unauthorized: authentication is required and has failed or has not yet been provided",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.UNAUTHORIZED"
-    
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
 
-#     @property
-#     def status_code(self)->int:
-#         return 401
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class AccessDeniedError(XoloError):
+    code = "XOLO.ACCESS_DENIED"
+    status_code = 403
+    default_message = "Access denied"
 
-# class UnauthorizedScope(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Unauthorized scope: the provided token does not have the required scope for this operation",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-    
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.UNAUTHORIZED_SCOPE"
-    
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
 
-#     @property
-#     def status_code(self)->int:
-#         return 401
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
-    
-# class InvalidLicense(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Invalid license: the provided license is not valid or has expired",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-    
-#     @property
-#     def status_code(self) -> int:
-#         """HTTP status code for the invalid license."""
-#         return 401  # or 403 if you prefer "Forbidden"
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.INVALID_LICENSE"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class ValidationError(XoloError):
+    code = "XOLO.VALIDATION_ERROR"
+    status_code = 422
+    default_message = "Validation failed"
 
-    
-# class ServerError(XoloError):
-#     def __init__(self,*args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args,metadata=metadata)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Internal server error: an unexpected error occurred on the server",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
-#     @property
-#     def status_code(self)->int:
-#         return 500
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.SERVER_ERROR"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
-    
 
-# class InvalidCredentialsError(XoloError):
-#     def __init__(self, *args,raw_detail:Optional[str]=None,headers:Optional[dict]=None,metadata:Optional[dict]={}):
-#         super().__init__(*args)
-#         self.raw_detail = raw_detail
-#         self._headers   = headers
-    
-#     @property
-#     def detail(self)->ErrorDetail:
-#         return ErrorDetail(
-#             http_status = self.status_code,
-#             code        = self.code,
-#             code_int    = ERROR_CODES.get(self.code, -1),
-#             detail      = "Invalid credentials: the provided authentication credentials are incorrect",
-#             raw_error   = self.raw_detail,
-#             metadata    = self.metadata
-#         )
+class InvalidLicenseError(XoloError):
+    code = "XOLO.INVALID_LICENSE"
+    status_code = 401
+    default_message = "Invalid license"
 
-#     @property
-#     def status_code(self) -> int:
-#         """HTTP status code for invalid credentials."""
-#         return 401
 
-#     @property
-#     def code(self) -> Optional[str]:
-#         return "XOLO.INVALID_CREDENTIALS"
-#     @property
-#     def code_int(self) -> Optional[int]:
-#         return ERROR_CODES.get(self.code,0)
-#     @property
-#     def headers(self) -> Optional[dict]:
-#         return self._headers
+class DatabaseError(XoloError):
+    code = "XOLO.DATABASE_ERROR"
+    status_code = 500
+    default_message = "Database operation failed"
+
+
+class InternalError(XoloError):
+    code = "XOLO.INTERNAL_ERROR"
+    status_code = 500
+    default_message = "Internal server error"
+
+
+CODE_TO_ERROR = {
+    NotFoundError.code: NotFoundError,
+    AlreadyExistsError.code: AlreadyExistsError,
+    ConflictError.code: ConflictError,
+    UnauthorizedError.code: UnauthorizedError,
+    AccessDeniedError.code: AccessDeniedError,
+    ValidationError.code: ValidationError,
+    InvalidLicenseError.code: InvalidLicenseError,
+    DatabaseError.code: DatabaseError,
+    InternalError.code: InternalError,
+}
+
+STATUS_TO_ERROR = {
+    400: ValidationError,
+    401: UnauthorizedError,
+    403: AccessDeniedError,
+    404: NotFoundError,
+    409: ConflictError,
+    422: ValidationError,
+    500: InternalError,
+}
+
+
+# Backward-compatible aliases for older imports.
+XError = XoloError
+NotFound = NotFoundError
+AlreadyExists = AlreadyExistsError
+Unauthorized = UnauthorizedError
+AccessDenied = AccessDeniedError
+ServerError = InternalError
+InvalidLicense = InvalidLicenseError
+
+
+__all__ = [
+    "ErrorDetail",
+    "XoloError",
+    "XError",
+    "NotFoundError",
+    "AlreadyExistsError",
+    "ConflictError",
+    "UnauthorizedError",
+    "AccessDeniedError",
+    "ValidationError",
+    "InvalidLicenseError",
+    "DatabaseError",
+    "InternalError",
+    "NotFound",
+    "AlreadyExists",
+    "Unauthorized",
+    "AccessDenied",
+    "ServerError",
+    "InvalidLicense",
+]
