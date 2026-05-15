@@ -8,7 +8,7 @@
 
   [![CI](https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml/badge.svg)](https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml)
   [![codecov](https://codecov.io/gh/muyal-research-group/xolo/branch/master/graph/badge.svg)](https://codecov.io/gh/muyal-research-group/xolo)
-  [![TestPyPI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Ftest.pypi.org%2Fpypi%2Fxolo%2Fjson&query=%24.info.version&label=TestPyPI&logo=pypi&color=0A7ABC)](https://test.pypi.org/project/xolo/)
+  [![TestPyPI](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmuyal-research-group%2Fxolo%2Fmaster%2Fpyproject.toml&query=%24.tool.poetry.version&label=TestPyPI&logo=pypi&color=0A7ABC)](https://test.pypi.org/project/xolo/)
   [![License](https://img.shields.io/badge/license-Fair%20Source-0A7ABC)](LICENSE)
 </div>
 
