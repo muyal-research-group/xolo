@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xolo"
-version = "0.1.0a2"
+version = "0.1.0a1"
 description = ""
 authors = ["Ignacio Castillo <jcastillo@mictlanx.com>"]
 readme = "README.md"
