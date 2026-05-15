@@ -5,6 +5,12 @@
 <div align="center">
   <h1>Xolo</h1>
   <p>Python client, local authorization engines, and tooling for the Xolo IAM platform.</p>
+
+  [![CI](https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml/badge.svg)](https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml)
+  [![codecov](https://codecov.io/gh/muyal-research-group/xolo/branch/master/graph/badge.svg)](https://codecov.io/gh/muyal-research-group/xolo)
+  [![PyPI](https://img.shields.io/pypi/v/xolo)](https://pypi.org/project/xolo/)
+  [![Python](https://img.shields.io/pypi/pyversions/xolo)](https://pypi.org/project/xolo/)
+  [![License](https://img.shields.io/github/license/muyal-research-group/xolo)](LICENSE)
 </div>
 
 ## Overview

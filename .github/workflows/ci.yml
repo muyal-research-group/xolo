@@ -58,6 +58,13 @@ jobs:
         env:
           XOLO_LOG_PATH: ${{ env.XOLO_LOG_PATH }}
           XOLO_OUTPUT_PATH: ${{ env.XOLO_OUTPUT_PATH }}
-      - name: Generate Coverage Report  
-        run: |  
+      - name: Generate Coverage Report
+        run: |
           poetry run coverage report -m
+          poetry run coverage xml
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
