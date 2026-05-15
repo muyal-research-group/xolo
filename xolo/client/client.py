@@ -375,6 +375,27 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def list_users_discovery(self, admin_token: str = "") -> Result[List[M.UserDTO], E.XoloError]:
+        """List users for discovery/autocomplete (lightweight, no pagination).
+
+        Args:
+            admin_token: Optional admin-token override.
+
+        Returns:
+            A ``Result`` containing the user list.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("users/list"),
+                headers=self._admin_headers(admin_token, required=True),
+            )
+            return Ok([M.UserDTO.model_validate(item) for item in self._list_json(response)])
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def delete_user(self, username: str, admin_token: str = "") -> Result[M.DeletedUserResponseDTO, E.XoloError]:
         """Delete a user by username.
 
@@ -817,6 +838,39 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def rotate_license(
+        self,
+        username: str,
+        scope: str,
+        expires_in: str,
+        admin_token: str = "",
+    ) -> Result[M.AssignLicenseResponseDTO, E.XoloError]:
+        """Rotate (re-issue) an existing license with a new expiration.
+
+        Args:
+            username: License owner username.
+            scope: Scope name for the license.
+            expires_in: Relative expiration string for the new license.
+            admin_token: Optional admin-token override.
+
+        Returns:
+            A ``Result`` containing the updated license-assignment DTO.
+        """
+        try:
+            payload = M.RotateLicenseDTO(username=username, scope=scope, expires_in=expires_in)
+            response = self._request(
+                "POST",
+                self._account_url("licenses/rotate"),
+                headers=self._admin_headers(admin_token, required=True),
+                json=payload.model_dump(),
+            )
+            data = self._response_json(response) or {"ok": True}
+            return Ok(M.AssignLicenseResponseDTO.model_validate(data))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def create_scope(self, scope: str, secret: str = "", admin_token: str = "") -> Result[M.CreatedScopeResponseDTO, E.XoloError]:
         """Create a scope in the configured account.
 
@@ -970,6 +1024,27 @@ class XoloClient(object):
                 headers=self._admin_headers(admin_token, required=True),
             )
             return Ok([M.AssignedScopeResponseDTO.model_validate(item) for item in self._list_json(response)])
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_scopes_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List scopes for discovery/autocomplete (id+name pairs).
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of scope discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("scopes/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
@@ -1338,6 +1413,69 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def list_acl_groups_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ACL groups for discovery/autocomplete (id+name pairs).
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of group discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("acl/groups/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_acl_principals_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ACL principals for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of principal discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("acl/principals/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_acl_resources_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ACL resources for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of resource discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("acl/resources/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def create_api_key(
         self,
         name: str,
@@ -1596,7 +1734,7 @@ class XoloClient(object):
         action: str,
         token: str,
         temporal_secret: str,
-        location: str = "*",
+        location: Optional[M.GeoPointDTO] = None,
         time: Optional[str] = None,
         api_key: str = "",
         admin_token: str = "",
@@ -1609,8 +1747,8 @@ class XoloClient(object):
             action: Action being evaluated.
             token: Bearer access token.
             temporal_secret: Temporal secret key.
-            location: Optional location value.
-            time: Optional time value.
+            location: Optional geo-point for location-aware evaluation; None = wildcard pass.
+            time: Optional ISO-8601 datetime string; None = wildcard pass.
             api_key: Optional API-key override for this request.
             admin_token: Optional admin-token override for this request.
 
@@ -1632,6 +1770,90 @@ class XoloClient(object):
                 json=payload.model_dump(exclude_none=True),
             )
             return Ok(M.ABACDecisionDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_abac_policies_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ABAC policies for discovery/autocomplete (id+name pairs).
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of policy discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("abac/policies/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_abac_subjects_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ABAC subjects for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of subject discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("abac/subjects/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_abac_resources_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ABAC resources for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of resource discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("abac/resources/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_abac_locations_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List ABAC locations for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of location discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("abac/locations/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
@@ -2017,6 +2239,69 @@ class XoloClient(object):
                 json=payload.model_dump(),
             )
             return Ok(M.NGACDecisionDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_ngac_nodes_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List NGAC nodes for discovery/autocomplete (id+name pairs).
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of node discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("ngac/nodes/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_ngac_assignments_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List NGAC assignments for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of assignment discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("ngac/assignments/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_ngac_associations_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List NGAC associations for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of association discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("ngac/associations/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:
@@ -2503,6 +2788,48 @@ class XoloClient(object):
                 headers=self._authz_headers(token, temporal_secret, api_key=api_key, admin_token=admin_token),
             )
             return Ok(M.EffectivePermissionsDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_rbac_roles_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List RBAC roles for discovery/autocomplete (id+name pairs).
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of role discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("rbac/roles/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
+    def list_rbac_permissions_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
+        """List RBAC permissions for discovery/autocomplete.
+
+        Args:
+            api_key: Optional API-key override.
+
+        Returns:
+            A ``Result`` containing a list of permission discovery dicts.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url("rbac/permissions/list"),
+                headers=self._api_key_headers(api_key, required=True),
+            )
+            return Ok(self._list_json(response))
         except R.exceptions.HTTPError as http_err:
             return Err(self.__process_exception(http_err))
         except Exception as e:

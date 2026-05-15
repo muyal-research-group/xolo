@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Generic, List, Optional, Set, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
 
@@ -20,6 +20,32 @@ class IdResultDTO(XoloDTO):
 
 
 WILDCARD = "*"
+MAX_RADIUS_KM = 5.0
+
+
+class TimeWindowMode(str, Enum):
+    WILDCARD    = "wildcard"
+    DATETIME    = "datetime"
+    TIME_OF_DAY = "time_of_day"
+    DATE        = "date"
+
+
+class GeoPointDTO(XoloDTO):
+    lat: float
+    lng: float
+
+
+class GeoZoneDTO(XoloDTO):
+    lat:       float
+    lng:       float
+    radius_km: float = 1.0
+
+    @field_validator("radius_km")
+    @classmethod
+    def _cap_radius(cls, v: float) -> float:
+        if v <= 0 or v > MAX_RADIUS_KM:
+            raise ValueError(f"radius_km must be between 0 and {MAX_RADIUS_KM}")
+        return v
 
 
 class Effect(str, Enum):
@@ -107,6 +133,12 @@ class SelfDeleteLicenseDTO(XoloDTO):
     force: Optional[bool] = True
 
 
+class RotateLicenseDTO(XoloDTO):
+    username:   str
+    scope:      str
+    expires_in: str
+
+
 class AssignLicenseDTO(XoloDTO):
     username: str
     scope: str
@@ -158,12 +190,13 @@ class CheckDTO(XoloDTO):
 
 
 class CreateABACEventDTO(XoloDTO):
-    subject: str
-    resource: str
-    location: str = WILDCARD
+    subject:    str
+    resource:   str
+    location:   Optional[GeoZoneDTO] = None
+    time_mode:  TimeWindowMode = TimeWindowMode.WILDCARD
     time_start: Optional[str] = None
-    time_end: Optional[str] = None
-    action: str
+    time_end:   Optional[str] = None
+    action:     str
 
 
 class CreateABACPolicyDTO(XoloDTO):
@@ -173,11 +206,11 @@ class CreateABACPolicyDTO(XoloDTO):
 
 
 class ABACEvaluateDTO(XoloDTO):
-    subject: str
+    subject:  str
     resource: str
-    location: str = WILDCARD
-    time: Optional[str] = None
-    action: str
+    location: Optional[GeoPointDTO] = None
+    time:     Optional[str] = None
+    action:   str
 
 
 class CreateNodeDTO(XoloDTO):
@@ -303,13 +336,14 @@ UsersResourcesDTO = UserResourcesDTO
 
 
 class ABACEventRecordDTO(XoloDTO):
-    event_id: str
-    subject: str | Dict[str, str]
-    resource: str | Dict[str, str]
-    location: str | Dict[str, str] = "*"
+    event_id:   str
+    subject:    str | Dict[str, str]
+    resource:   str | Dict[str, str]
+    location:   Optional[Dict] = None
+    time:       Optional[Dict] = None
     time_start: Optional[str | Dict[str, str]] = None
-    time_end: Optional[str | Dict[str, str]] = None
-    action: str | Dict[str, str]
+    time_end:   Optional[str | Dict[str, str]] = None
+    action:     str | Dict[str, str]
 
 
 class ABACPolicyDTO(XoloDTO):

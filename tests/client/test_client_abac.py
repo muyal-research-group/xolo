@@ -19,7 +19,6 @@ def test_abac_methods_return_expected_dtos(
                 {
                     "subject": "Doctor",
                     "resource": "Chart",
-                    "location": "*",
                     "action": "read",
                 }
             ],
@@ -59,7 +58,6 @@ def test_abac_methods_return_expected_dtos(
         protected_client.evaluate_abac(
             subject="Doctor",
             resource="Chart",
-            location="*",
             action="read",
             token=user.auth.access_token,
             temporal_secret=user.auth.temporal_secret,

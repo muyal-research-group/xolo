@@ -11,7 +11,6 @@ nav = [
   { "Client guide" = "client.md" },
   { "API reference" = "api-reference.md" },
   { "Authentication" = "authentication.md" },
-  { "Entity operations" = "entity-operations.md" },
   { "Development" = "development.md" },
 ]
 
