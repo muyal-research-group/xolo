@@ -1,10 +1,13 @@
 [tool.poetry]
 name = "xolo"
-version = "0.1.0a1"
+version = "0.1.0a2"
 description = ""
 authors = ["Ignacio Castillo <jcastillo@mictlanx.com>"]
 readme = "README.md"
 packages = [{include = "xolo"}]
+classifiers = [
+    "License :: Other/Proprietary License",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
