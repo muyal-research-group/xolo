@@ -146,6 +146,19 @@ def test_rbac_methods_return_expected_dtos(
     assert assignment.subject_id == user.user_key
     assert assignment.role_id == child_role.role_id
 
+    role_check = unwrap_ok(
+        protected_client.has_role(
+            subject_id=user.user_key,
+            role_id=child_role.role_id,
+            token=user.auth.access_token,
+            temporal_secret=user.auth.temporal_secret,
+        ),
+        M.HasRoleDTO,
+    )
+    assert role_check.subject_id == user.user_key
+    assert role_check.role_id == child_role.role_id
+    assert role_check.has_role is True
+
     subject_roles = unwrap_ok_list(
         protected_client.get_subject_roles(
             subject_id=user.user_key,
