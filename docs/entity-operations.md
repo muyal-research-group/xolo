@@ -60,6 +60,7 @@ The refreshed client is designed around the entity groups exposed by the live Op
 - `revoke_permission()`
 - `claim_resource()`
 - `check_permission_auth()`
+- `check_group_membership()`
 
 ## ABAC
 
@@ -98,18 +99,6 @@ The refreshed client is designed around the entity groups exposed by the live Op
 - `unassign_role()`
 - `get_subject_roles()`
 - `get_effective_permissions()`
+- `has_role()`
 - `check_rbac_permission()`
 
-## Global policy engine
-
-These routes stay global under `/api/v4/policies`:
-
-- `create_policies()`
-- `list_policies()`
-- `get_policy()`
-- `update_policy()`
-- `delete_policy()`
-- `prepare_policy_communities()`
-- `evaluate_policy_request()`
-- `evaluate_policy_batch()`
-- `inject_policy()`

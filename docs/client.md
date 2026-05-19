@@ -37,13 +37,8 @@ else:
 
 ## Error handling
 
-HTTP failures are normalized into `xolo.client.errors.XoloError` subclasses such as:
-
-- `UnauthorizedError`
-- `AccessDeniedError`
-- `ValidationError`
-- `NotFoundError`
-- `ConflictError`
+See the dedicated [Error handling](error-handling.md) guide for the full error class
+reference and `Result` extraction patterns.
 
 ## Method families
 
@@ -64,7 +59,6 @@ These rely on `X-API-Key`:
 - `signup`
 - `auth`
 - account-scoped user-context calls that also require bearer auth for ACL, ABAC, NGAC, and RBAC
-- global `/api/v4/policies` operations when executed in a user context
 
 All API-key-backed public methods also accept an optional trailing `api_key=""` override when one request must use a different key than the client default.
 
@@ -77,7 +71,6 @@ These use `Authorization: Bearer ...` and often add `Temporal-Secret-Key`:
 - `enable_user`
 - `disable_user`
 - ACL, ABAC, NGAC, and RBAC evaluation/manipulation routes
-- global policy-engine routes under `/api/v4/policies`
 
 For ACL, ABAC, NGAC, and RBAC methods, bearer auth now combines with **either** `api_key` **or** `admin_token`; at least one of those headers must be available for the request.
 
