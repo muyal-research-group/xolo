@@ -1413,6 +1413,40 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def check_group_membership(
+        self,
+        group_id: str,
+        user_id: str,
+        token: str,
+        temporal_secret: str,
+        api_key: str = "",
+        admin_token: str = "",
+    ) -> Result[M.GroupMembershipResponseDTO, E.XoloError]:
+        """Check whether a user is a member of a group.
+
+        Args:
+            group_id: Group identifier.
+            user_id: User identifier.
+            token: Bearer access token.
+            temporal_secret: Temporal secret key.
+            api_key: Optional API-key override for this request.
+            admin_token: Optional admin-token override for this request.
+
+        Returns:
+            A ``Result`` containing the group membership DTO.
+        """
+        try:
+            response = self._request(
+                "GET",
+                self._account_url(f"acl/groups/{group_id}/members/{user_id}"),
+                headers=self._authz_headers(token, temporal_secret, api_key=api_key, admin_token=admin_token),
+            )
+            return Ok(M.GroupMembershipResponseDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def list_acl_groups_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
         """List ACL groups for discovery/autocomplete (id+name pairs).
 
@@ -2627,6 +2661,7 @@ class XoloClient(object):
         role_id: str,
         token: str,
         temporal_secret: str,
+        subject_type: str = "user",
         api_key: str = "",
         admin_token: str = "",
     ) -> Result[M.AssignmentDTO, E.XoloError]:
@@ -2637,6 +2672,7 @@ class XoloClient(object):
             role_id: Role identifier.
             token: Bearer access token.
             temporal_secret: Temporal secret key.
+            subject_type: Subject type, either ``"user"`` or ``"group"``.
             api_key: Optional API-key override for this request.
             admin_token: Optional admin-token override for this request.
 
@@ -2644,7 +2680,7 @@ class XoloClient(object):
             A ``Result`` containing the assignment DTO.
         """
         try:
-            payload = M.AssignRoleDTO(subject_id=subject_id, role_id=role_id)
+            payload = M.AssignRoleDTO(subject_id=subject_id, role_id=role_id, subject_type=subject_type)
             response = self._request(
                 "POST",
                 self._account_url("rbac/assignments"),
@@ -2793,6 +2829,41 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def has_role(
+        self,
+        subject_id: str,
+        role_id: str,
+        token: str,
+        temporal_secret: str,
+        api_key: str = "",
+        admin_token: str = "",
+    ) -> Result[M.HasRoleDTO, E.XoloError]:
+        """Check whether a subject has a specific role (includes group-inherited roles).
+
+        Args:
+            subject_id: Subject identifier.
+            role_id: Role identifier to check.
+            token: Bearer access token.
+            temporal_secret: Temporal secret key.
+            api_key: Optional API-key override for this request.
+            admin_token: Optional admin-token override for this request.
+
+        Returns:
+            A ``Result`` containing the has-role DTO.
+        """
+        try:
+            response = self._request(
+                "POST",
+                self._account_url("rbac/has-role"),
+                headers=self._authz_headers(token, temporal_secret, api_key=api_key, admin_token=admin_token),
+                json={"subject_id": subject_id, "role_id": role_id},
+            )
+            return Ok(M.HasRoleDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def list_rbac_roles_discovery(self, api_key: str = "") -> Result[List[Dict], E.XoloError]:
         """List RBAC roles for discovery/autocomplete (id+name pairs).
 
@@ -2835,261 +2906,3 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
-    def create_policies(
-        self,
-        policies: List[M.PolicyDTO],
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[M.PolicyCreateResponseDTO, E.XoloError]:
-        """Create global policy-engine policies.
-
-        Args:
-            policies: Policy DTOs to create.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the policy-create DTO.
-        """
-        try:
-            response = self._request(
-                "POST",
-                self._global_url("policies"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-                json=[policy.model_dump(mode="json") for policy in policies],
-            )
-            return Ok(M.PolicyCreateResponseDTO.model_validate(self._response_json(response)))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def list_policies(self, token: str, temporal_secret: str, api_key: str = "") -> Result[List[M.PolicyDTO], E.XoloError]:
-        """List global policy-engine policies.
-
-        Args:
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing policy DTOs.
-        """
-        try:
-            response = self._request(
-                "GET",
-                self._global_url("policies"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-            )
-            return Ok([M.PolicyDTO.model_validate(item) for item in self._list_json(response)])
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def get_policy(self, policy_id: str, token: str, temporal_secret: str, api_key: str = "") -> Result[M.PolicyDTO, E.XoloError]:
-        """Fetch a global policy-engine policy by identifier.
-
-        Args:
-            policy_id: Policy identifier.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the policy DTO.
-        """
-        try:
-            response = self._request(
-                "GET",
-                self._global_url(f"policies/{policy_id}"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-            )
-            return Ok(M.PolicyDTO.model_validate(self._response_json(response)))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def delete_policy(
-        self,
-        policy_id: str,
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[M.PolicyDeleteResponseDTO, E.XoloError]:
-        """Delete a global policy-engine policy.
-
-        Args:
-            policy_id: Policy identifier.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the delete-policy DTO.
-        """
-        try:
-            response = self._request(
-                "DELETE",
-                self._global_url(f"policies/{policy_id}"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-            )
-            data = self._response_json(response) or {"detail": "Policy deleted"}
-            return Ok(M.PolicyDeleteResponseDTO.model_validate(data))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def update_policy(
-        self,
-        policy_id: str,
-        policy: M.PolicyDTO,
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[M.PolicyUpdateResponseDTO, E.XoloError]:
-        """Update a global policy-engine policy.
-
-        Args:
-            policy_id: Policy identifier.
-            policy: Replacement policy DTO.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the update-policy DTO.
-        """
-        try:
-            response = self._request(
-                "PUT",
-                self._global_url(f"policies/{policy_id}"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-                json=policy.model_dump(mode="json"),
-            )
-            data = self._response_json(response) or {"detail": "Policy updated"}
-            return Ok(M.PolicyUpdateResponseDTO.model_validate(data))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def prepare_policy_communities(self, token: str, temporal_secret: str, api_key: str = "") -> Result[M.PoliciesPreparedResponseDTO, E.XoloError]:
-        """Prepare policy-engine communities.
-
-        Args:
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the server preparation payload.
-        """
-        try:
-            response = self._request(
-                "POST",
-                self._global_url("policies/prepare"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-            )
-            return Ok(M.PoliciesPreparedResponseDTO.model_validate(self._response_json(response)))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def evaluate_policy_request(
-        self,
-        request: M.PolicyAccessRequestDTO,
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[M.PolicyEvaluationResponseDTO, E.XoloError]:
-        """Evaluate a single global policy-engine request.
-
-        Args:
-            request: Access request DTO.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the policy evaluation DTO.
-        """
-        try:
-            response = self._request(
-                "POST",
-                self._global_url("policies/evaluate"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-                json=request.model_dump(mode="json"),
-            )
-            return Ok(M.PolicyEvaluationResponseDTO.model_validate(self._response_json(response)))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def evaluate_policy_batch(
-        self,
-        requests: List[M.PolicyAccessRequestDTO],
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[List[M.PolicyBatchEvaluationItemDTO], E.XoloError]:
-        """Evaluate a batch of global policy-engine requests.
-
-        Args:
-            requests: Access-request DTOs.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing batch evaluation items.
-        """
-        try:
-            response = self._request(
-                "POST",
-                self._global_url("policies/evaluate/batch"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-                json=[item.model_dump(mode="json") for item in requests],
-            )
-            return Ok([M.PolicyBatchEvaluationItemDTO.model_validate(item) for item in self._list_json(response)])
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))
-
-    def inject_policy(
-        self,
-        policy: M.PolicyDTO,
-        token: str,
-        temporal_secret: str,
-        api_key: str = "",
-    ) -> Result[M.PolicyInjectResponseDTO, E.XoloError]:
-        """Inject a policy into the prepared policy engine.
-
-        Args:
-            policy: Policy DTO to inject.
-            token: Bearer access token.
-            temporal_secret: Temporal secret key.
-            api_key: Optional API-key override for this request.
-
-        Returns:
-            A ``Result`` containing the inject-policy DTO.
-        """
-        try:
-            response = self._request(
-                "POST",
-                self._global_url("policies/inject"),
-                headers=self._bearer_headers(token, temporal_secret, api_key=api_key, include_api_key=True),
-                json=policy.model_dump(mode="json"),
-            )
-            return Ok(M.PolicyInjectResponseDTO.model_validate(self._response_json(response)))
-        except R.exceptions.HTTPError as http_err:
-            return Err(self.__process_exception(http_err))
-        except Exception as e:
-            return Err(E.XoloError.from_exception(e))

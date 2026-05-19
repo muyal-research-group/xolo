@@ -67,7 +67,6 @@ class APIKeyScope(str, Enum):
     RBAC = "rbac"
     ABAC = "abac"
     NGAC = "ngac"
-    POLICIES = "policies"
     SCOPES = "scopes"
     LICENSES = "licenses"
     ALL = "all"
@@ -461,6 +460,12 @@ class CheckPermissionResponseDTO(XoloDTO):
     has_permission: bool
 
 
+class GroupMembershipResponseDTO(XoloDTO):
+    user_id: str
+    group_id: str
+    is_member: bool
+
+
 class CreatedABACPolicyResponseDTO(IdResultDTO):
     policy_id: str
 
@@ -570,6 +575,7 @@ class ParentRoleDTO(XoloDTO):
 class AssignRoleDTO(XoloDTO):
     subject_id: str
     role_id: str
+    subject_type: str = "user"
 
 
 class UnassignRoleDTO(XoloDTO):
@@ -612,6 +618,12 @@ RBACCheckPermissionDTO = CheckPermissionDTO
 RBACCheckResultDTO = CheckResultDTO
 
 
+class HasRoleDTO(XoloDTO):
+    subject_id: str
+    role_id: str
+    has_role: bool
+
+
 class DeletedRoleResponseDTO(OperationResultDTO):
     role_id: str
 
@@ -621,58 +633,3 @@ class UnassignedRoleResponseDTO(OperationResultDTO):
     role_id: str
 
 
-class PolicyAttributeComponentDTO(XoloDTO):
-    attribute: str
-    value: str
-
-
-class PolicyEventDTO(XoloDTO):
-    event_id: str
-    subject: PolicyAttributeComponentDTO
-    asset: PolicyAttributeComponentDTO
-    space: PolicyAttributeComponentDTO
-    time: PolicyAttributeComponentDTO
-    action: PolicyAttributeComponentDTO
-
-
-class PolicyDTO(XoloDTO):
-    policy_id: str
-    description: str
-    events: List[PolicyEventDTO] = Field(default_factory=list)
-    effect: str
-
-
-class PolicyAccessRequestDTO(XoloDTO):
-    subject: PolicyAttributeComponentDTO
-    asset: PolicyAttributeComponentDTO
-    space: PolicyAttributeComponentDTO
-    time: PolicyAttributeComponentDTO
-    action: PolicyAttributeComponentDTO
-
-
-class PolicyCreateResponseDTO(XoloDTO):
-    n_added: int
-
-
-class PolicyDeleteResponseDTO(XoloDTO):
-    detail: str
-
-
-class PolicyUpdateResponseDTO(XoloDTO):
-    detail: str
-
-
-class PolicyInjectResponseDTO(XoloDTO):
-    detail: str
-
-
-class PoliciesPreparedResponseDTO(XoloDTO):
-    model_config = ConfigDict(extra="allow")
-
-
-class PolicyEvaluationResponseDTO(XoloDTO):
-    result: str
-
-
-class PolicyBatchEvaluationItemDTO(XoloDTO):
-    model_config = ConfigDict(extra="allow")
