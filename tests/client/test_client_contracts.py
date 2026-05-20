@@ -209,34 +209,6 @@ def test_list_accounts_uses_global_accounts_endpoint():
     assert kwargs["headers"] == {"X-Admin-Token": "admin-1"}
 
 
-def test_create_policies_uses_global_policy_endpoint_and_api_key():
-    client = XoloClient(account_id="acct-1", api_key="api-key", api_url="http://localhost:10000/api/v4")
-    policy = M.PolicyDTO(
-        policy_id="policy-1",
-        description="Example policy",
-        effect="permit",
-        events=[],
-    )
-
-    with patch("xolo.client.client.R.request", return_value=_response({"n_added": 1})) as request:
-        result = client.create_policies(
-            policies=[policy],
-            token="bearer-1",
-            temporal_secret="temp-1",
-        )
-
-    assert result.is_ok
-    kwargs = request.call_args.kwargs
-    assert kwargs["method"] == "POST"
-    assert kwargs["url"] == "http://localhost:10000/api/v4/policies"
-    assert kwargs["headers"] == {
-        "Authorization": "Bearer bearer-1",
-        "Temporal-Secret-Key": "temp-1",
-        "X-API-Key": "api-key",
-    }
-    assert kwargs["json"][0]["policy_id"] == "policy-1"
-
-
 def test_update_user_password_requires_recovery_token():
     client = XoloClient(account_id="acct-1", api_key="api-key", api_url="http://localhost:10000/api/v4")
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" width="200" alt="Xolo logo" />
+  <img src="docs/assets/logo.png" width="200" alt="Xolo logo" />
 </div>
 
 <div align="center">
