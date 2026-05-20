@@ -1412,6 +1412,44 @@ class XoloClient(object):
             return Err(self.__process_exception(http_err))
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
+    def check_permission_group(
+        self,
+        group_id: str,
+        resource_id: str,
+        permissions: List[str],
+        token: str,
+        temporal_secret: str,
+        api_key: str = "",
+        admin_token: str = "",
+    ) -> Result[M.CheckPermissionResponseDTO, E.XoloError]:
+        """Check ACL permissions for a group.
+
+        Args:
+            group_id: Group identifier.
+            resource_id: Resource identifier.
+            permissions: Permissions to verify.
+            token: Bearer access token.
+            temporal_secret: Temporal secret key.
+            api_key: Optional API-key override for this request.
+            admin_token: Optional admin-token override for this request.
+
+        Returns:
+            A ``Result`` containing the ACL check DTO.
+        """
+        try:
+            payload = M.CheckDTO(resource_id=resource_id, permissions=permissions, principal_id=group_id, principal_type="GROUP")
+            response = self._request(
+                "POST",
+                self._account_url("acl/check"),
+                headers=self._authz_headers(token, temporal_secret, api_key=api_key, admin_token=admin_token),
+                json=payload.model_dump(),
+            )
+            return Ok(M.CheckPermissionResponseDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+    
 
     def check_group_membership(
         self,

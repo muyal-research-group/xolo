@@ -186,6 +186,9 @@ class ClaimResourceDTO(XoloDTO):
 class CheckDTO(XoloDTO):
     resource_id: str
     permissions: List[str]
+    principal_id:   Optional[str] = None  # if omitted → defaults to the authenticated caller
+    principal_type: Optional[str] = None  # "USER" | "GROUP"
+
 
 
 class CreateABACEventDTO(XoloDTO):
