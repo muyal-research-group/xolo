@@ -101,8 +101,10 @@ def live_config() -> LiveConfig:
     except requests.RequestException as exc:
         pytest.skip(f"Live Xolo API is unavailable at {XOLO_HTTP_ROOT}: {exc}")
 
+
+
     docker_env = _docker_env(XOLO_CONTAINER_NAME)
-    acl_key = _live_secret("XOLO_ACL_KEY", docker_env)
+    acl_key = _live_secret("XOLO_API_KEY", docker_env)
     admin_tokens = _first_nonempty(
         os.environ.get("XOLO_SUPER_ADMIN_TOKENS", ""),
         os.environ.get("XOLO_SUPER_ADMIN_KEYS", ""),
@@ -139,10 +141,10 @@ def live_config() -> LiveConfig:
         pytest.skip("Live account_id is not configured and no admin-visible accounts were found.")
 
     return LiveConfig(
-        api_url=XOLO_API_URL,
-        account_id=account_id,
-        acl_key=acl_key,
-        admin_token=admin_token,
+        api_url     = XOLO_API_URL,
+        account_id  = account_id,
+        acl_key     = acl_key,
+        admin_token = admin_token,
     )
 
 

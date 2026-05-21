@@ -1,4 +1,23 @@
-# Xolo
+<p align="center">
+  <img src="./assets/logo.png" alt="Xolo" width="220" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml"><img src="https://github.com/muyal-research-group/xolo/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/muyal-research-group/xolo"><img src="https://codecov.io/gh/muyal-research-group/xolo/branch/master/graph/badge.svg" alt="codecov"></a>
+  <a href="https://test.pypi.org/project/xolo/"><img src="https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmuyal-research-group%2Fxolo%2Fmaster%2Fpyproject.toml&query=%24.tool.poetry.version&label=TestPyPI&logo=pypi&color=0A7ABC" alt="TestPyPI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Fair%20Source-0A7ABC" alt="License"></a>
+</p>
+
+<!-- <p align="center"> -->
+<!-- <div align="center"> -->
+  <!-- <h1>Xolo</h1> -->
+  <!-- <p>Python client, local authorization engines, and tooling for the Xolo IAM platform.</p> -->
+
+<!-- </div> -->
+
+
+<!-- </p> -->
 
 Xolo is a Python package that combines:
 
@@ -23,7 +42,7 @@ client = XoloClient(
 )
 ```
 
-Most operations now target `/api/v4/accounts/{account_id}/...`, while the global policy-engine endpoints still live under `/api/v4/policies`.
+Most operations now target `/api/v4/accounts/{account_id}/...`, and the client methods reflect this scoping. For example, instead of `client.create_user(...)`, you would use `client.create_user(account_id="my-account", ...)`. This design emphasizes the account context for all API interactions.
 
 ## Package areas
 

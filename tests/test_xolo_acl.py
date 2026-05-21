@@ -49,7 +49,7 @@ def parser():
 # --- Test Cases for Each Command ---
 def test_parse_create_user(parser):
     text = "CREATE USER 'testuser' WITH PASSWORD='123' EMAIL='test@test.com' ROLE='Guest'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, CreateUserCommand)
     assert result.username == 'testuser'
@@ -60,7 +60,7 @@ def test_parse_create_user(parser):
 
 def test_parse_update_user(parser):
     text = "UPDATE USER 'testuser' SET EMAIL='new@test.com' FIRSTNAME='Test'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, UpdateUserCommand)
     assert result.username == 'testuser'
@@ -70,21 +70,21 @@ def test_parse_update_user(parser):
 
 def test_parse_delete_user(parser):
     text = "DELETE USER 'testuser';" # Test with semicolon
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, DeleteUserCommand)
     assert result.username == 'testuser'
 
 def test_parse_create_scope(parser):
     text = "CREATE SCOPE 'MYSCOPE'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, CreateScopeCommand)
     assert result.scope_name == 'MYSCOPE'
 
 def test_parse_assign_scope(parser):
     text = "ASSIGN SCOPE 'MYSCOPE' TO USER 'testuser'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, AssignScopeCommand)
     assert result.scope_name == 'MYSCOPE'
@@ -92,7 +92,7 @@ def test_parse_assign_scope(parser):
 
 def test_parse_authenticate(parser):
     text = "AUTHENTICATE USER 'testuser' WITH PASSWORD '123' FOR SCOPE 'MYSCOPE'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, AuthenticateCommand)
     assert result.username == 'testuser'
@@ -101,7 +101,7 @@ def test_parse_authenticate(parser):
 
 def test_parse_create_license(parser):
     text = "GENERATE LICENSE FOR 'testuser' IN SCOPE 'MYSCOPE' EXPIRES '30d'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, CreateLicenseCommand)
     assert result.username == 'testuser'
@@ -110,7 +110,7 @@ def test_parse_create_license(parser):
 
 def test_parse_delete_license(parser):
     text = "DELETE LICENSE FOR 'testuser' IN SCOPE 'MYSCOPE'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, DeleteLicenseCommand)
     assert result.username == 'testuser'
@@ -118,7 +118,7 @@ def test_parse_delete_license(parser):
 
 def test_parse_grant(parser):
     text = "GRANT 'read' ON 'resource-123' TO 'Admin'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, GrantCommand)
     assert result.permission == 'read'
@@ -127,7 +127,7 @@ def test_parse_grant(parser):
 
 def test_parse_revoke(parser):
     text = "REVOKE 'write' ON 'resource-abc' FROM 'User'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, RevokeCommand)
     assert result.permission == 'write'
@@ -136,7 +136,7 @@ def test_parse_revoke(parser):
 
 def test_parse_assign_role(parser):
     text = "ASSIGN ROLE 'Manager' TO USER 'supervisor_bob'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, AssignRoleCommand)
     assert result.role == 'Manager'
@@ -144,21 +144,21 @@ def test_parse_assign_role(parser):
 
 def test_parse_load_abac(parser):
     text = "LOAD ABAC POLICY '/path/to/my/policy.json'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, LoadAbacPolicyCommand)
     assert result.policy_path == '/path/to/my/policy.json'
 
 def test_parse_eval_abac(parser):
     text = "EVALUATE ABAC REQUEST '/path/to/my/request.json'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, EvaluateAbacRequestCommand)
     assert result.request_path == '/path/to/my/request.json'
 
 def test_parse_encrypt(parser):
     text = "ENCRYPT FILE '/in.txt' WITH KEY 'mykey' AS '/out.enc'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, EncryptFileCommand)
     assert result.input_path == '/in.txt'
@@ -167,7 +167,7 @@ def test_parse_encrypt(parser):
 
 def test_parse_decrypt(parser):
     text = "DECRYPT FILE '/in.enc' WITH KEY 'mykey' AS '/out.txt'"
-    result = parser.parseString(text, parseAll=True)[0]
+    result = parser.parse_string(text, parseAll=True)[0]
     
     assert isinstance(result, DecryptFileCommand)
     assert result.input_path == '/in.enc'
@@ -179,7 +179,7 @@ def test_parse_decrypt(parser):
 def test_parse_failure(parser):
     text = "CREATE USER 'user' WITHOUT PASSWORD" # Invalid grammar
     with pytest.raises(pp.ParseException):
-        parser.parseString(text, parseAll=True)
+        parser.parse_string(text, parseAll=True)
 
 def test_parse_full_script(parser):
     """

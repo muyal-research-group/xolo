@@ -129,6 +129,19 @@ def test_acl_methods_return_expected_dtos(
     assert added_members.group_id == group.group_id
     assert added_members.members == [guest.user_key]
 
+    is_member = unwrap_ok(
+        protected_client.check_group_membership(
+            group_id=group.group_id,
+            user_id=guest.user_key,
+            token=owner.auth.access_token,
+            temporal_secret=owner.auth.temporal_secret,
+        ),
+        M.GroupMembershipResponseDTO,
+    )
+    assert is_member.group_id == group.group_id
+    assert is_member.user_id == guest.user_key
+    assert is_member.is_member is True
+
     group_resource_id = rand_name("resource")
     claimed_group_resource = unwrap_ok(
         protected_client.claim_resource(
@@ -176,6 +189,17 @@ def test_acl_methods_return_expected_dtos(
     )
     assert removed_members.group_id == group.group_id
     assert removed_members.members == [guest.user_key]
+
+    not_member = unwrap_ok(
+        protected_client.check_group_membership(
+            group_id=group.group_id,
+            user_id=guest.user_key,
+            token=owner.auth.access_token,
+            temporal_secret=owner.auth.temporal_secret,
+        ),
+        M.GroupMembershipResponseDTO,
+    )
+    assert not_member.is_member is False
 
     denied_after_member_removal = unwrap_ok(
         protected_client.check_permission_auth(

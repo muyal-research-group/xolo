@@ -827,6 +827,25 @@ Checks whether the authenticated caller holds the specified permissions on a res
 
 ---
 
+### `check_group_membership(group_id, user_id, token, temporal_secret, api_key, admin_token)`
+
+Checks whether a user is a member of a group.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `group_id` | `str` | — | Group identifier. |
+| `user_id` | `str` | — | User identifier. |
+| `token` | `str` | — | Bearer access token. |
+| `temporal_secret` | `str` | — | Temporal secret issued alongside the access token. |
+| `api_key` | `str` | `""` | Overrides the client-level API key for this call. |
+| `admin_token` | `str` | `""` | Overrides the client-level admin token for this call. |
+
+**Returns:** `Result[GroupMembershipResponseDTO, XoloError]`
+
+`GroupMembershipResponseDTO` fields: `user_id`, `group_id`, `is_member`.
+
+---
+
 ### `list_acl_groups_discovery(api_key)`
 
 Lightweight group list for dropdowns. Returns `{id, name}` pairs.
@@ -1427,16 +1446,17 @@ Removes a role inheritance link.
 
 ---
 
-### `assign_role(subject_id, role_id, token, temporal_secret, api_key, admin_token)`
+### `assign_role(subject_id, role_id, token, temporal_secret, subject_type, api_key, admin_token)`
 
 Assigns a role to a subject.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `subject_id` | `str` | — | Subject identifier (typically a user key). |
+| `subject_id` | `str` | — | Subject identifier (user key or group id). |
 | `role_id` | `str` | — | Role identifier to assign. |
 | `token` | `str` | — | Bearer access token. |
 | `temporal_secret` | `str` | — | Temporal secret issued alongside the access token. |
+| `subject_type` | `str` | `"user"` | Subject type: `"user"` or `"group"`. |
 | `api_key` | `str` | `""` | Overrides the client-level API key for this call. |
 | `admin_token` | `str` | `""` | Overrides the client-level admin token for this call. |
 
@@ -1515,6 +1535,25 @@ Returns the full set of permissions a subject holds, including those inherited f
 **Returns:** `Result[EffectivePermissionsDTO, XoloError]`
 
 `EffectivePermissionsDTO` fields: `subject_id`, `permissions` (deduplicated, includes inherited).
+
+---
+
+### `has_role(subject_id, role_id, token, temporal_secret, api_key, admin_token)`
+
+Checks whether a subject has a specific role, including roles inherited via group membership.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `subject_id` | `str` | — | Subject identifier. |
+| `role_id` | `str` | — | Role identifier to check. |
+| `token` | `str` | — | Bearer access token. |
+| `temporal_secret` | `str` | — | Temporal secret issued alongside the access token. |
+| `api_key` | `str` | `""` | Overrides the client-level API key for this call. |
+| `admin_token` | `str` | `""` | Overrides the client-level admin token for this call. |
+
+**Returns:** `Result[HasRoleDTO, XoloError]`
+
+`HasRoleDTO` fields: `subject_id`, `role_id`, `has_role`.
 
 ---
 
@@ -1629,7 +1668,6 @@ Valid scope values for `create_api_key`.
 | `"rbac"` | RBAC role and assignment endpoints. |
 | `"abac"` | ABAC policy and evaluation endpoints. |
 | `"ngac"` | NGAC graph endpoints. |
-| `"policies"` | Global policy-engine endpoints. |
 | `"all"` | All scopes. |
 
 ---

@@ -27,8 +27,7 @@ client = XoloClient(
 Used for:
 
 - signup and auth flows,
-- account-scoped user-context authorization APIs,
-- global `/api/v4/policies` operations.
+- account-scoped user-context authorization APIs.
 
 This is why `api_key` is a first-class constructor argument.
 
@@ -55,7 +54,7 @@ client.get_current_user(
 1. Create or obtain an API key for the target account.
 2. Sign up or provision users in that account.
 3. Authenticate with `auth()` to obtain a bearer token and temporal secret.
-4. Use the bearer token plus temporal secret for ACL, ABAC, NGAC, RBAC, and policy-engine operations.
+4. Use the bearer token plus temporal secret for ACL, ABAC, NGAC, and RBAC operations.
 
 ## Notes about password recovery
 
