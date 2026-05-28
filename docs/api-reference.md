@@ -171,16 +171,17 @@ Lightweight user list intended for dropdowns and autocomplete widgets. Same data
 
 ---
 
-### `delete_user(username, admin_token)`
+### `delete_user(username, api_key)`
 
-> **Auth:** `X-Admin-Token` (required).
+> **Auth:** `X-API-Key` (required). The key must have the `users` (or `all`) scope and belong to the same account.
 
-Deletes a user by username.
+Deletes a user and all related data (licenses, scope assignments, sessions, ACL policies, security groups, NGAC nodes).
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `username` | `str` | — | Username to delete. |
-| `admin_token` | `str` | `""` | Overrides the client-level admin token for this call. |
+| `api_key` | `str` | `""` | Overrides the client-level API key for this call. |
+| `admin_token` | `str` | `""` | **Deprecated.** Ignored. Pass `api_key` instead. |
 
 **Returns:** `Result[DeletedUserResponseDTO, XoloError]`
 
