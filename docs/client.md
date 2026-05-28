@@ -50,7 +50,7 @@ These use `X-Admin-Token` and are mainly for account administration:
 - API keys
 - scopes
 - licenses
-- admin-style user lifecycle operations (`create_user`, `list_users`, `delete_user`, `block_user`, `unblock_user`)
+- admin-style user lifecycle operations (`create_user`, `list_users`, `block_user`, `unblock_user`)
 
 ### API-key methods
 
@@ -58,6 +58,7 @@ These rely on `X-API-Key`:
 
 - `signup`
 - `auth`
+- `delete_user` (requires the `users` or `all` scope)
 - account-scoped user-context calls that also require bearer auth for ACL, ABAC, NGAC, and RBAC
 
 All API-key-backed public methods also accept an optional trailing `api_key=""` override when one request must use a different key than the client default.
