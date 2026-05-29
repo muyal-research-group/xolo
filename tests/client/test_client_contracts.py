@@ -1,4 +1,5 @@
 import json
+import pytest
 from unittest.mock import patch
 
 import requests
@@ -217,3 +218,29 @@ def test_update_user_password_requires_recovery_token():
     assert result.is_err
     error = result.unwrap_err()
     assert isinstance(error, E.ValidationError)
+
+
+def test_delete_user_uses_account_scoped_url_and_api_key_header():
+    client = XoloClient(account_id="acct-1", api_key="test-api-key", api_url="http://localhost:10000/api/v4")
+
+    with patch("xolo.client.client.R.request", return_value=_response(status_code=204)) as request:
+        result = client.delete_user(username="alice")
+
+    assert result.is_ok
+    value = result.unwrap()
+    assert value.username == "alice"
+    kwargs = request.call_args.kwargs
+    assert kwargs["method"] == "DELETE"
+    assert kwargs["url"] == "http://localhost:10000/api/v4/accounts/acct-1/users/alice"
+    assert kwargs["headers"] == {"X-API-Key": "test-api-key"}
+
+
+def test_delete_user_deprecates_admin_token():
+    client = XoloClient(account_id="acct-1", api_key="test-api-key", api_url="http://localhost:10000/api/v4")
+
+    with patch("xolo.client.client.R.request", return_value=_response(status_code=204)):
+        with pytest.warns(DeprecationWarning, match="admin_token is deprecated"):
+            result = client.delete_user(username="alice", admin_token="ignored-admin-token")
+
+    assert result.is_ok
+    assert result.unwrap().username == "alice"

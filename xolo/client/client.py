@@ -1,4 +1,5 @@
 import sys
+import warnings
 from typing import Any, Dict, List, Optional
 
 import pyparsing as pp
@@ -396,21 +397,28 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
-    def delete_user(self, username: str, admin_token: str = "") -> Result[M.DeletedUserResponseDTO, E.XoloError]:
+    def delete_user(self, username: str, api_key: str = "", *, admin_token: str = "") -> Result[M.DeletedUserResponseDTO, E.XoloError]:
         """Delete a user by username.
 
         Args:
             username: Username to delete.
-            admin_token: Optional admin-token override.
+            api_key: Optional API-key override. The key must have the ``users`` scope.
+            admin_token: Deprecated. Ignored. Pass ``api_key`` instead.
 
         Returns:
             A ``Result`` containing a synthetic deletion DTO.
         """
+        if admin_token:
+            warnings.warn(
+                "admin_token is deprecated for delete_user; the endpoint now requires X-API-Key with the 'users' scope.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         try:
             self._request(
                 "DELETE",
                 self._account_url(f"users/{username}"),
-                headers=self._admin_headers(admin_token, required=True),
+                headers=self._api_key_headers(api_key, required=True),
             )
             return Ok(M.DeletedUserResponseDTO(username=username))
         except R.exceptions.HTTPError as http_err:
