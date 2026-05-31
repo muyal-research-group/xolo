@@ -49,12 +49,32 @@ client.get_current_user(
 )
 ```
 
+## Refreshing a session
+
+Call `refresh_token()` to extend an active session without re-authenticating. The server
+invalidates the old token pair on success, so always switch to the new credentials immediately:
+
+```python
+refreshed = client.refresh_token(
+    token=auth.access_token,
+    temporal_secret=auth.temporal_secret,
+    expiration="1h",          # optional; defaults to "15min"
+).unwrap()
+
+# old credentials are now dead — use the new pair
+access_token = refreshed.access_token
+temporal_secret = refreshed.temporal_secret
+```
+
+Accepted `expiration` values follow a human-friendly format: `"15min"`, `"1h"`, `"2d"`, etc.
+
 ## Typical flow
 
 1. Create or obtain an API key for the target account.
 2. Sign up or provision users in that account.
 3. Authenticate with `auth()` to obtain a bearer token and temporal secret.
-4. Use the bearer token plus temporal secret for ACL, ABAC, NGAC, and RBAC operations.
+4. Call `refresh_token()` before expiry to extend the session.
+5. Use the bearer token plus temporal secret for ACL, ABAC, NGAC, and RBAC operations.
 
 ## Notes about password recovery
 

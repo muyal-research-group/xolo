@@ -684,6 +684,39 @@ class XoloClient(object):
         except Exception as e:
             return Err(E.XoloError.from_exception(e))
 
+    def refresh_token(
+        self,
+        token: str,
+        temporal_secret: str,
+        expiration: str = "15min",
+    ) -> Result[M.AuthenticatedDTO, E.XoloError]:
+        """Refresh the current bearer session, returning a new token pair.
+
+        The old ``access_token`` / ``temporal_secret`` pair is invalidated on
+        success; use the values from the returned DTO for subsequent calls.
+
+        Args:
+            token: Current valid bearer access token.
+            temporal_secret: Temporal secret returned at login.
+            expiration: Lifetime of the new token (e.g. ``"15min"``, ``"1h"``,
+                ``"2d"``). Defaults to ``"15min"``.
+
+        Returns:
+            A ``Result`` containing the new authenticated-session DTO.
+        """
+        try:
+            response = self._request(
+                "POST",
+                self._account_url("users/refresh"),
+                headers=self._bearer_headers(token=token, temporal_secret=temporal_secret),
+                json={"expiration": expiration},
+            )
+            return Ok(M.AuthenticatedDTO.model_validate(self._response_json(response)))
+        except R.exceptions.HTTPError as http_err:
+            return Err(self.__process_exception(http_err))
+        except Exception as e:
+            return Err(E.XoloError.from_exception(e))
+
     def get_current_user(self, token: str, temporal_secret: str) -> Result[M.UserDTO, E.XoloError]:
         """Fetch the authenticated user profile.
 
