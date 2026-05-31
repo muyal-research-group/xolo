@@ -69,6 +69,7 @@ These use `Authorization: Bearer ...` and often add `Temporal-Secret-Key`:
 
 - `get_current_user`
 - `logout`
+- `refresh_token`
 - `enable_user`
 - `disable_user`
 - ACL, ABAC, NGAC, and RBAC evaluation/manipulation routes

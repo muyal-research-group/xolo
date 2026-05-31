@@ -235,6 +235,78 @@ def test_delete_user_uses_account_scoped_url_and_api_key_header():
     assert kwargs["headers"] == {"X-API-Key": "test-api-key"}
 
 
+def test_refresh_token_uses_bearer_headers_and_account_scoped_url():
+    client = XoloClient(account_id="acct-1", api_key="api-key", api_url="http://localhost:10000/api/v4")
+
+    with patch("xolo.client.client.R.request", return_value=_response(
+        {
+            "username": "alice",
+            "first_name": "Alice",
+            "last_name": "Smith",
+            "email": "alice@example.com",
+            "profile_photo": "",
+            "access_token": "new-token",
+            "temporal_secret": "new-secret",
+            "metadata": {},
+            "user_id": "user-uuid",
+        }
+    )) as request:
+        result = client.refresh_token(token="old-token", temporal_secret="old-secret")
+
+    assert result.is_ok
+    dto = result.unwrap()
+    assert dto.access_token == "new-token"
+    assert dto.temporal_secret == "new-secret"
+    kwargs = request.call_args.kwargs
+    assert kwargs["method"] == "POST"
+    assert kwargs["url"] == "http://localhost:10000/api/v4/accounts/acct-1/users/refresh"
+    assert kwargs["headers"] == {
+        "Authorization": "Bearer old-token",
+        "Temporal-Secret-Key": "old-secret",
+    }
+    assert kwargs["json"] == {"expiration": "15min"}
+
+
+def test_refresh_token_forwards_custom_expiration():
+    client = XoloClient(account_id="acct-1", api_key="api-key", api_url="http://localhost:10000/api/v4")
+
+    with patch("xolo.client.client.R.request", return_value=_response(
+        {
+            "username": "alice",
+            "first_name": "Alice",
+            "last_name": "Smith",
+            "email": "alice@example.com",
+            "profile_photo": "",
+            "access_token": "new-token",
+            "temporal_secret": "new-secret",
+            "metadata": {},
+        }
+    )) as request:
+        client.refresh_token(token="old-token", temporal_secret="old-secret", expiration="2d")
+
+    assert request.call_args.kwargs["json"] == {"expiration": "2d"}
+
+
+def test_refresh_token_does_not_include_api_key_header():
+    client = XoloClient(account_id="acct-1", api_key="api-key", api_url="http://localhost:10000/api/v4")
+
+    with patch("xolo.client.client.R.request", return_value=_response(
+        {
+            "username": "alice",
+            "first_name": "Alice",
+            "last_name": "Smith",
+            "email": "alice@example.com",
+            "profile_photo": "",
+            "access_token": "new-token",
+            "temporal_secret": "new-secret",
+            "metadata": {},
+        }
+    )) as request:
+        client.refresh_token(token="old-token", temporal_secret="old-secret")
+
+    assert "X-API-Key" not in request.call_args.kwargs["headers"]
+
+
 def test_delete_user_deprecates_admin_token():
     client = XoloClient(account_id="acct-1", api_key="test-api-key", api_url="http://localhost:10000/api/v4")
 
